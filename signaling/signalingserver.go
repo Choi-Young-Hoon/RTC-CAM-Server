@@ -1,7 +1,8 @@
 package signaling
 
 import (
-	"fmt"
+	"github.com/gorilla/websocket"
+	"log"
 	"net/http"
 )
 
@@ -20,6 +21,18 @@ func (s *SignalingServer) Stop() {
 
 }
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 func (s *SignalingServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("SignalingServer ServeHTTP()")
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
+	}
+	defer conn.Close()
+
+	log.Println("[SignalingServer] Client Connect:", r.RemoteAddr)
 }
