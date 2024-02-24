@@ -1,36 +1,71 @@
 package main
 
 import (
-	"log"
+	"context"
+	"errors"
 	"net/http"
-	"rtccam/rtccamroom"
+	"os"
+	"os/signal"
+	"rtccam/roommanager"
 	"rtccam/rtccamserver"
-	"rtccam/signaling"
+	"rtccam/rtccamweb"
+	"strconv"
+	"syscall"
 )
 
-func createRoom() {
-	roomManager := rtccamroom.GetRoomManager()
-	for i := 0; i < 5; i++ {
-		err := roomManager.CreateRoom("Room - 1" + string(i))
-		if err != nil {
-			panic(err)
-		}
+var httpServer *http.Server
+
+func createDummyRoom() {
+	roomManager := roommanager.GetRoomManager()
+	for i := 1; i < 6; i++ {
+		room := roommanager.NewRoom("Room - " + strconv.Itoa(i))
+		roomManager.AddRoom(room)
+	}
+}
+
+func infoLog(servicePort string) {
+	println("============================================")
+	println("=           RTCCam Server Start            =")
+	println("============================================")
+	println("= ServicePort: " + servicePort + "                      =")
+	println("============================================")
+
+}
+
+func sigStopServer() {
+	if err := httpServer.Shutdown(context.TODO()); err != nil {
+		panic(err)
+	}
+}
+
+func startServer() {
+	httpServer = &http.Server{
+		Addr: ":50001",
+	}
+
+	fs := http.FileServer(http.Dir("./web/static"))
+	http.Handle("/js/", fs)
+
+	http.HandleFunc("/", rtccamweb.HTTPIndexHandler)
+	http.HandleFunc("/rtccam", rtccamserver.RTCCamWSHandler)
+
+	infoLog(httpServer.Addr)
+	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		panic(err)
 	}
 }
 
 func main() {
-	createRoom()
+	createDummyRoom()
 
-	rtcCamServer := rtccamserver.NewRTCCamServer()
-	signalingServer := signaling.NewSignalingServer()
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT)
 
-	http.Handle("/rtccam", rtcCamServer)
-	http.Handle("/signaling", signalingServer)
+	go func() {
+		<-sigs
+		sigStopServer()
+		os.Exit(0)
+	}()
 
-	log.Println("Server Start Service Port: 50002")
-
-	err := http.ListenAndServeTLS(":50002", "cert.pem", "privkey.pem", nil)
-	if err != nil {
-		panic(err)
-	}
+	startServer()
 }
