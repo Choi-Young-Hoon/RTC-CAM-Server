@@ -12,6 +12,23 @@ var peerVideoStreamMap = new Map();
 var localMediaStream = null;
 var localVideoElement = document.getElementById('localVideo');
 
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelector('button[data-bs-target="#roomListMenu"]').click();
+
+    initRTCCamSocket();
+
+    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
+        localMediaStream = stream;
+
+        localVideoElement.srcObject = stream;
+        localVideoElement.onloadedmetadata = function(e) {
+            localVideoElement.play();
+        }
+    }).catch(error => {
+        alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
+    });
+});
+
 localVideoElement.addEventListener('click', function() {
     localVideoElement.requestPictureInPicture().catch(error => {
         console.error(error);
@@ -30,10 +47,7 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelector('button[data-bs-target="#roomListMenu"]').click();
-
+function initRTCCamSocket() {
     rtcCamSocket = new WebSocket(rtcCamWSServerUrl);
     rtcCamSocket.onopen = function () {
         console.log("WebSocket opened");
@@ -62,18 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
-
-    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
-        localMediaStream = stream;
-
-        localVideoElement.srcObject = stream;
-        localVideoElement.onloadedmetadata = function(e) {
-            localVideoElement.play();
-        }
-    }).catch(error => {
-        alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
-    });
-});
+}
 
 function handlerConnectMessage(data) {
     console.log("client_id: " + data.client_id);
@@ -175,8 +178,6 @@ async function requestRoomLeave(clientId) {
 }
 
 function startStreaming() {
-    createPeerConnection(0);
-
     for (let clientId in roomClients) {
         let clientIdInt = parseInt(clientId);
         createPeerConnection(clientIdInt);
@@ -194,6 +195,7 @@ function startStreaming() {
         });
     }
 
+    localVideoElement.requestPictureInPicture();
     document.querySelector('button[data-bs-target="#roomListMenu"]').click();
 }
 
@@ -279,8 +281,6 @@ function showRoomList(roomList) {
             } else {
                 requestRoomJoin(room.id, '');
             }
-
-            localVideoElement.requestPictureInPicture();
         }
         roomElement.style.cursor = "pointer";
         roomElement.innerHTML = htmlString;
@@ -357,8 +357,6 @@ document.getElementById('createRoomButton').addEventListener('click', function()
     console.log('Room Password:', roomPassword);
 
     requestCreateRoom(roomTitle, isPassword, roomPassword);
-
-    localVideoElement.requestPictureInPicture();
 
     createRoomModal.hide();
 });
