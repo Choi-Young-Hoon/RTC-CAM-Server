@@ -9,22 +9,38 @@ var roomClients = [];
 var peerConnectionMap = new Map();
 var peerVideoStreamMap = new Map();
 
-var localVideoElement = document.getElementById('localVideo');
 var localMediaStream = null;
+var localVideoElement = document.getElementById('localVideo');
 
-document.addEventListener('DOMContentLoaded', function() {
+var isLocalVideoPIP = false;
+
+document.addEventListener('visibilitychange', function() {
+    try {
+        if (document.hidden && 'pictureInPictureEnabled' in document && isLocalVideoPIP) {
+            localVideoElement.requestPictureInPicture().catch(error => {
+                console.error(error);
+            });
+        }
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelector('button[data-bs-target="#roomListMenu"]').click();
+
     rtcCamSocket = new WebSocket(rtcCamWSServerUrl);
-
-    rtcCamSocket.onopen = function() {
+    rtcCamSocket.onopen = function () {
         console.log("WebSocket opened");
     }
 
-    rtcCamSocket.onerror = function(event) {
+    rtcCamSocket.onerror = function (event) {
         alert("rtccam 서버와 통신할 수 없습니다.");
         rtcCamSocket = new WebSocket(rtcCamWSServerUrl);
     }
 
-    rtcCamSocket.onmessage = function(event) {
+    rtcCamSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
         console.log(data);
 
@@ -43,7 +59,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    document.querySelector('button[data-bs-target="#roomListMenu"]').click();
+    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
+        localMediaStream = stream;
+
+        localVideoElement.srcObject = stream;
+        localVideoElement.onloadedmetadata = function(e) {
+            localVideoElement.play();
+        }
+    }).catch(error => {
+        alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
+    });
 });
 
 function handlerConnectMessage(data) {
@@ -146,31 +171,24 @@ async function requestRoomLeave(clientId) {
 }
 
 function startStreaming() {
-    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
-        localMediaStream = stream;
+    createPeerConnection(0);
 
-        localVideoElement.srcObject = stream;
-        createPeerConnection(0);
-
-        for (let clientId in roomClients) {
-            let clientIdInt = parseInt(clientId);
-            createPeerConnection(clientIdInt);
-            let peerConnection = peerConnectionMap.get(clientIdInt);
-            peerConnection.createOffer().then(function(offer) {
-                peerConnection.setLocalDescription(offer);
-                rtcCamSocket.send(JSON.stringify({
-                    signaling: {
-                        request_type: 'offer',
-                        request_client_id: myClientId,
-                        response_client_id: clientIdInt,
-                        offer: offer,
-                    }
-                }));
-            });
-        }
-    }).catch(error => {
-        alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
-    });
+    for (let clientId in roomClients) {
+        let clientIdInt = parseInt(clientId);
+        createPeerConnection(clientIdInt);
+        let peerConnection = peerConnectionMap.get(clientIdInt);
+        peerConnection.createOffer().then(function(offer) {
+            peerConnection.setLocalDescription(offer);
+            rtcCamSocket.send(JSON.stringify({
+                signaling: {
+                    request_type: 'offer',
+                    request_client_id: myClientId,
+                    response_client_id: clientIdInt,
+                    offer: offer,
+                }
+            }));
+        });
+    }
 
     document.querySelector('button[data-bs-target="#roomListMenu"]').click();
 }
@@ -258,6 +276,8 @@ function showRoomList(roomList) {
                 requestRoomJoin(room.id, '');
             }
 
+            localVideoElement.requestPictureInPicture();
+            isLocalVideoPIP = true;
         }
         roomElement.style.cursor = "pointer";
         roomElement.innerHTML = htmlString;
@@ -292,6 +312,17 @@ function updateVideoElement() {
         videoElem.className = "embed-responsive-item";
         videoElem.style.width = `${window.innerWidth / 2}px`;
         videoElem.style.height = `${window.innerWidth / 2}px`;
+        videoElem.addEventListener('click', function() {
+            if (videoElem.requestFullscreen) {
+                videoElem.requestFullscreen();
+            } else if (videoElem.mozRequestFullScreen) { // Firefox
+                videoElem.mozRequestFullScreen();
+            } else if (videoElem.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                videoElem.webkitRequestFullscreen();
+            } else if (videoElem.msRequestFullscreen) { // IE/Edge
+                videoElem.msRequestFullscreen();
+            }
+        });
 
         colDiv.appendChild(videoElem);
         rowDiv.appendChild(colDiv);
@@ -319,12 +350,13 @@ document.getElementById('createRoomButton').addEventListener('click', function()
 
     requestCreateRoom(roomTitle, isPassword, roomPassword);
 
+    localVideoElement.requestPictureInPicture();
+    isLocalVideoPIP = true;
+
+
     createRoomModal.hide();
 });
 
 document.getElementById('isPassword').addEventListener('change', function() {
     document.getElementById('roomPassword').disabled = !this.checked;
 });
-
-function createRoom() {
-}
