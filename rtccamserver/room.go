@@ -50,6 +50,10 @@ func roomLeave(client *rtccamclient.RTCCamClient) {
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
+		if client.JoinRoomId == 0 {
+			return
+		}
+
 		log.Println("[RoomLeaveHandler] ClientId:", client.ClientId, "Error:", err)
 		client.Send(message.NewRTCCamErrorMessage(err.Error()))
 		return

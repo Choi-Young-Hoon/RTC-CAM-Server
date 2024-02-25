@@ -40,7 +40,7 @@ func sigStopServer() {
 
 func startServer() {
 	httpServer = &http.Server{
-		Addr: ":50001",
+		Addr: ":40001",
 	}
 
 	fs := http.FileServer(http.Dir("./web/static"))
@@ -50,9 +50,13 @@ func startServer() {
 	http.HandleFunc("/rtccam", rtccamserver.RTCCamWSHandler)
 
 	infoLog(httpServer.Addr)
-	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := httpServer.ListenAndServeTLS("cert.pem", "privKey.pem"); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		panic(err)
 	}
+
+	//if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	//	panic(err)
+	//}
 }
 
 func main() {

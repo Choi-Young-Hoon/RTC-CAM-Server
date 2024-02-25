@@ -2,6 +2,7 @@ package roommanager
 
 import (
 	"errors"
+	"rtccam/message"
 	"rtccam/rtccamclient"
 	"sync"
 )
@@ -37,6 +38,9 @@ func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) {
 	client.JoinRoomId = r.Id
 
 	r.Clients[client.ClientId] = client
+
+	joinSuccessMessage := message.NewRTCCamJoinSuccessMessage()
+	client.Send(joinSuccessMessage)
 }
 
 func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) {

@@ -2,14 +2,20 @@ package message
 
 func NewRTCCamSuccessMessage() *RTCCamResultMessage {
 	return &RTCCamResultMessage{
-		IsSuccess: true,
+		ResultMessage: "success",
+	}
+}
+
+func NewRTCCamJoinSuccessMessage() *RTCCamResultMessage {
+	return &RTCCamResultMessage{
+		ResultMessage: "join_success",
 	}
 }
 
 func NewRTCCamErrorMessage(errorMessage string) *RTCCamResultMessage {
 	return &RTCCamResultMessage{
-		IsSuccess:    false,
-		ErrorMessage: errorMessage,
+		ResultMessage: "error",
+		ErrorMessage:  errorMessage,
 	}
 }
 
@@ -20,7 +26,7 @@ func NewRTCCamRoomListMessage(roomManager interface{}) *RTCCamResultMessage {
 }
 
 type RTCCamResultMessage struct {
-	IsSuccess bool `json:"is_success"`
+	ResultMessage string `json:"result_message"`
 
 	ErrorMessage string `json:"error_message,omitempty"`
 
