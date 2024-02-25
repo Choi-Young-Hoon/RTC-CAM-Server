@@ -148,8 +148,9 @@ function startStreaming() {
 function createPeerConnection(clientId) {
     var peerConnection = new RTCPeerConnection({
         'iceServers': [
-            {'urls': 'stun:stun.l.google.com:19302'},
-            {'urls': 'turn:choiyh.synology.me:50001', 'username': 'test', 'credential': 'test'},
+            {'urls': stunServerUrl},
+            {'urls': turnServerUrl, 'username': 'test', 'credential': 'test'},
+            {'urls': 'turn:kyj9447.iptime.org:50001', 'username': 'test', 'credential': 'test'},
         ]
     });
 

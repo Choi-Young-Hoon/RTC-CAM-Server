@@ -17,7 +17,7 @@ var httpServer *http.Server
 
 func createDummyRoom() {
 	roomManager := roommanager.GetRoomManager()
-	for i := 1; i < 6; i++ {
+	for i := 1; i < 2; i++ {
 		room := roommanager.NewRoom("Room - " + strconv.Itoa(i))
 		roomManager.AddRoom(room)
 	}
@@ -50,13 +50,14 @@ func startServer() {
 	http.HandleFunc("/rtccam", rtccamserver.RTCCamWSHandler)
 
 	infoLog(httpServer.Addr)
-	if err := httpServer.ListenAndServeTLS("cert.pem", "privKey.pem"); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		panic(err)
-	}
 
-	//if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	//if err := httpServer.ListenAndServeTLS("cert.pem", "privKey.pem"); err != nil && !errors.Is(err, http.ErrServerClosed) {
 	//	panic(err)
 	//}
+
+	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		panic(err)
+	}
 }
 
 func main() {

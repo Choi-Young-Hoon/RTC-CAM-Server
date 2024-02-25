@@ -14,15 +14,14 @@
             <h5 id="offcanvasLeftLabel">방 목록</h5>
             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
-        <div class="offcanvas-body" id="roomList">
+        <div class="offcanvas-body overflow-auto" id="roomList">
         </div>
+
+        <button class="btn btn-primary fixed-bottom w-100" type="button" data-bs-toggle="modal" data-bs-target="#createRoomModal">
+            방 만들기
+        </button>
+
     </div>
-
-    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#roomListMenu" aria-controls="roomListMenu">
-        방 목록 보기
-    </button>
-
-
 
     <div class="container">
         <div class="row">
@@ -34,6 +33,10 @@
 
     <div class="embed-responsive embed-responsive-16by9" id="peerVideos">
     </div>
+
+    <button class="btn btn-primary fixed-bottom w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#roomListMenu" aria-controls="roomListMenu">
+        방 목록 보기
+    </button>
 
     <script src="/js/rtccam.js"></script>
 </body>
