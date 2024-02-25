@@ -12,7 +12,11 @@ var peerVideoStreamMap = new Map();
 var localMediaStream = null;
 var localVideoElement = document.getElementById('localVideo');
 
-var isLocalVideoPIP = false;
+localVideoElement.addEventListener('click', function() {
+    localVideoElement.requestPictureInPicture().catch(error => {
+        console.error(error);
+    });
+});
 
 document.addEventListener('visibilitychange', function() {
     try {
@@ -277,7 +281,6 @@ function showRoomList(roomList) {
             }
 
             localVideoElement.requestPictureInPicture();
-            isLocalVideoPIP = true;
         }
         roomElement.style.cursor = "pointer";
         roomElement.innerHTML = htmlString;
@@ -294,24 +297,29 @@ function updateVideoElement() {
     let rowDiv = null;
     let count = 0;
 
+    if (count % 2 === 0) {
+        rowDiv = document.createElement('div');
+        rowDiv.className = "row";
+        peerVideosDiv.appendChild(rowDiv);
+    }
+
     peerVideoStreamMap.forEach((stream, clientId) => {
-        if (count % 2 === 0) {
+      /*  if (count % 2 === 0) {
             rowDiv = document.createElement('div');
             rowDiv.className = "row";
             peerVideosDiv.appendChild(rowDiv);
         }
-
+*/
         let colDiv = document.createElement('div');
-        colDiv.className = "col-6";
+        colDiv.className = "col-3";
 
         let videoElem = document.createElement('video');
         videoElem.srcObject = stream;
         videoElem.autoplay = true;
         videoElem.muted = false;
         videoElem.playsinline = true;
-        videoElem.className = "embed-responsive-item";
-        videoElem.style.width = `${window.innerWidth / 2}px`;
-        videoElem.style.height = `${window.innerWidth / 2}px`;
+        videoElem.style.width = "100%";
+        videoElem.style.height = "100%";
         videoElem.addEventListener('click', function() {
             if (videoElem.requestFullscreen) {
                 videoElem.requestFullscreen();
@@ -326,7 +334,7 @@ function updateVideoElement() {
 
         colDiv.appendChild(videoElem);
         rowDiv.appendChild(colDiv);
-
+        peerVideosDiv.appendChild(rowDiv);
         count++;
     });
 }
@@ -351,8 +359,6 @@ document.getElementById('createRoomButton').addEventListener('click', function()
     requestCreateRoom(roomTitle, isPassword, roomPassword);
 
     localVideoElement.requestPictureInPicture();
-    isLocalVideoPIP = true;
-
 
     createRoomModal.hide();
 });

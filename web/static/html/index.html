@@ -7,6 +7,12 @@
     <meta charset="UTF-8"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
 
+    <style>
+        .btn-height {
+            height: 100px;
+        }
+    </style>
+
 </head>
 <body>
 
@@ -19,7 +25,7 @@
         <div class="offcanvas-body overflow-auto" id="roomList">
         </div>
 
-        <button class="btn btn-primary fixed-top-button w-100" type="button" data-bs-toggle="modal" data-bs-target="#createRoomModal">
+        <button class="btn btn-primary fixed-top-button w-100 btn-height  " type="button" data-bs-toggle="modal" data-bs-target="#createRoomModal">
             방 만들기
         </button>
     </div>
@@ -57,22 +63,21 @@
         </div>
     </div>
 
-
-    <button class="btn btn-primary fixed-top-button w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#roomListMenu" aria-controls="roomListMenu">
-        방 목록 보기
-    </button>
-
     <!-- 영상통화 화면 -->
     <div class="container">
         <div class="row">
             <div class="col-12">
-                <video id="localVideo" width="200" height="200" muted></video>
+                <video id="localVideo" width="100" height="100" muted></video>
             </div>
         </div>
     </div>
 
-    <div class="embed-responsive embed-responsive-16by9" id="peerVideos">
+    <div id="peerVideos">
     </div>
+
+    <button class="btn btn-primary fixed-bottom w-90 btn-height" type="button" data-bs-toggle="offcanvas" data-bs-target="#roomListMenu" aria-controls="roomListMenu">
+        방 목록 보기
+    </button>
 
     <script src="/js/rtccam.js"></script>
 </body>
