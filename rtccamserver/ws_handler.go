@@ -26,7 +26,9 @@ func RTCCamWSCientClose(client *rtccamclient.RTCCamClient) {
 	if err != nil {
 		return
 	}
+
 	room.LeaveClient(client)
+
 	BroadcastRoomList()
 }
 

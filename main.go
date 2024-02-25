@@ -6,22 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"rtccam/roommanager"
 	"rtccam/rtccamserver"
 	"rtccam/rtccamweb"
-	"strconv"
 	"syscall"
 )
 
 var httpServer *http.Server
-
-func createDummyRoom() {
-	roomManager := roommanager.GetRoomManager()
-	for i := 1; i < 2; i++ {
-		room := roommanager.NewRoom("Room - " + strconv.Itoa(i))
-		roomManager.AddRoom(room)
-	}
-}
 
 func infoLog(servicePort string) {
 	println("============================================")
@@ -61,8 +51,6 @@ func startServer() {
 }
 
 func main() {
-	createDummyRoom()
-
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
 

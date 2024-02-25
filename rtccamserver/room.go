@@ -15,6 +15,20 @@ func BroadcastRoomList() {
 	clientManager.Broadcast(roomListMessage)
 }
 
+func RoomCreateHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
+	log.Println("[RoomCreateHandler] Start ClientId:", client.ClientId, "Title:", roomRequestMessage.Title)
+	roomManager := roommanager.GetRoomManager()
+	if roomRequestMessage.Title == "" {
+		client.Send(message.NewRTCCamErrorMessage("Title is empty"))
+		return
+	}
+	room := roommanager.NewRoom(roomRequestMessage.Title, roomRequestMessage.Password)
+	roomManager.AddRoom(room)
+
+	roomRequestMessage.JoinRoomId = room.Id
+	RoomJoinHandler(client, roomRequestMessage)
+}
+
 func RoomListHandler(client *rtccamclient.RTCCamClient) {
 	roomManager := roommanager.GetRoomManager()
 	roomListMessage := message.NewRTCCamRoomListMessage(roomManager)
@@ -25,14 +39,25 @@ func RoomListHandler(client *rtccamclient.RTCCamClient) {
 	}
 }
 
-func RoomJoinHandler(client *rtccamclient.RTCCamClient, roomId int64) {
+func RoomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
 	roomLeave(client)
 
 	roomManager := roommanager.GetRoomManager()
-	room, err := roomManager.GetRoom(roomId)
+	room, err := roomManager.GetRoom(roomRequestMessage.JoinRoomId)
 	if err != nil {
 		log.Println("[RoomJoinHandler] ClientId:", client.ClientId, "Error:", err)
 		client.Send(message.NewRTCCamErrorMessage(err.Error()))
+		return
+	}
+
+	if room.IsPassword && room.Password != roomRequestMessage.Password {
+		log.Println("[RoomJoinHandler] ClientId:", client.ClientId, "Error: Password is incorrect")
+		client.Send(message.NewRTCCamErrorMessage("Password is incorrect"))
+		return
+	}
+
+	if client.JoinRoomId == room.Id {
+		BroadcastRoomList()
 		return
 	}
 
@@ -67,14 +92,15 @@ func RoomHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.
 	log.Println("[RoomHandler] ClientId:", client.ClientId, "RequestType:", roomRequestMessage.RequestType)
 
 	switch roomRequestMessage.RequestType {
+	case message.RoomRequestTypeCreateRoom:
+		RoomCreateHandler(client, roomRequestMessage)
+		break
 	case message.RoomRequestTypeRoomList:
 		RoomListHandler(client)
 		break
-
 	case message.RoomRequestTypeJoinRoom:
-		RoomJoinHandler(client, roomRequestMessage.JoinRoomId)
+		RoomJoinHandler(client, roomRequestMessage)
 		break
-
 	case message.RoomRequestTypeLeaveRoom:
 		RoomLeaveHandler(client)
 		break

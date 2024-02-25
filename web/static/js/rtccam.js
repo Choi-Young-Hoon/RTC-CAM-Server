@@ -1,17 +1,16 @@
-let rtcCamSocket = null;
-let rtcCamWSServerUrl = 'ws://' + window.location.hostname + ':40001/rtccam';
+var rtcCamSocket = null;
+var rtcCamWSServerUrl = 'ws://' + window.location.hostname + ':40001/rtccam';
 
-let myClientId = 0;
-let stunServerUrl = null;
-let turnServerUrl = null;
+var myClientId = 0;
+var stunServerUrl = null;
+var turnServerUrl = null;
 
-let roomClients = [];
-let localPeerConnection;
-let peerConnectionMap = new Map();
-let peerVideoStreamMap = new Map();
+var roomClients = [];
+var peerConnectionMap = new Map();
+var peerVideoStreamMap = new Map();
 
-let localVideoElement = document.getElementById('localVideo');
-let localMediaStream = null;
+var localVideoElement = document.getElementById('localVideo');
+var localMediaStream = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     rtcCamSocket = new WebSocket(rtcCamWSServerUrl);
@@ -62,6 +61,8 @@ function handlerResultMessage(data) {
         alert(data.error_message);
     } else if (data.result_message === "join_success") {
         startStreaming();
+    } else if (data.result_message === "leave_client") {
+        peerClose(data.leave_client_id);
     }
 }
 
@@ -96,23 +97,50 @@ function handlerCandidateMessage(data) {
     peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
 }
 
-function requestRoomList() {
-    rtcCamSocket.send(JSON.stringify({
+function clearPeerMap() {
+    peerConnectionMap.clear();
+    peerVideoStreamMap.clear();
+    updateVideoElement();
+}
+
+async function requestCreateRoom(roomTitle, isPassword, roomPassword) {
+    roomClients = [];
+    clearPeerMap();
+
+    await requestRoomLeave(myClientId);
+    await rtcCamSocket.send(JSON.stringify({
+        room: {
+            request_type: 'create_room',
+            title: roomTitle,
+            password: isPassword ? roomPassword : '',
+        },
+    }));
+}
+
+async function requestRoomList() {
+    await rtcCamSocket.send(JSON.stringify({
         room: {
             request_type: 'room_list',
         }
     }));
 }
 
-function requestRoomJoin(roomId) {
-    peerConnectionMap.clear();
-    peerVideoStreamMap.clear();
-    updateVideoElement();
+function requestRoomJoin(roomId, password) {
+    clearPeerMap();
 
     rtcCamSocket.send(JSON.stringify({
         room: {
             request_type: 'join_room',
+            password: password,
             join_room_id: roomId,
+        }
+    }));
+}
+
+async function requestRoomLeave(clientId) {
+    await rtcCamSocket.send(JSON.stringify({
+        room: {
+            request_type: 'leave_room',
         }
     }));
 }
@@ -143,6 +171,15 @@ function startStreaming() {
     }).catch(error => {
         alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
     });
+
+    document.querySelector('button[data-bs-target="#roomListMenu"]').click();
+}
+
+function peerClose(clientId) {
+    console.log("[peerClose] peerConnection closed");
+    peerConnectionMap.delete(clientId);
+    peerVideoStreamMap.delete(clientId);
+    updateVideoElement();
 }
 
 function createPeerConnection(clientId) {
@@ -175,11 +212,7 @@ function createPeerConnection(clientId) {
 
     peerConnection.oniceconnectionstatechange = function(event) {
         if (['disconnected', 'failed', 'closed'].includes(peerConnection.iceConnectionState)) {
-            console.log("peerConnection closed");
-            peerConnection.close();
-            peerConnectionMap.delete(clientId);
-            peerVideoStreamMap.delete(clientId);
-            updateVideoElement();
+            peerClose(clientId);
         }
         if (['connected', 'completed'].includes(peerConnection.iceConnectionState)) {
             updateVideoElement();
@@ -187,18 +220,12 @@ function createPeerConnection(clientId) {
     }
 
     if (clientId === 0) {
-        localPeerConnection = peerConnection;
+
     } else {
         peerConnectionMap.set(clientId, peerConnection);
     }
 
 
-}
-
-function requestRoomLeave() {
-    rtcCamSocket.send(JSON.stringify({
-        type: 'leave_room',
-    }));
 }
 
 function showRoomList(roomList) {
@@ -225,8 +252,12 @@ function showRoomList(roomList) {
         }
         roomElement.onclick = function() {
             roomClients = room.clients;
-            requestRoomJoin(room.id);
-            document.querySelector('button[data-bs-target="#roomListMenu"]').click();
+            if (room.is_password === true) {
+                requestRoomJoin(room.id, password=prompt("비밀번호를 입력하세요"));
+            } else {
+                requestRoomJoin(room.id, '');
+            }
+
         }
         roomElement.style.cursor = "pointer";
         roomElement.innerHTML = htmlString;
@@ -267,4 +298,33 @@ function updateVideoElement() {
 
         count++;
     });
+}
+
+
+let createRoomModal = new bootstrap.Modal(document.getElementById('createRoomModal'));
+////////////////////////////////////////////////////////////////////////////////////////////////////// Modal
+document.getElementById('createRoomButton').addEventListener('click', showCreateRoomDialog);
+function showCreateRoomDialog() {
+    createRoomModal.show();
+}
+
+document.getElementById('createRoomButton').addEventListener('click', function() {
+    var roomTitle = document.getElementById('roomTitle').value;
+    var isPassword = document.getElementById('isPassword').checked;
+    var roomPassword = document.getElementById('roomPassword').value;
+
+    console.log('Room Title:', roomTitle);
+    console.log('isPassword:', isPassword);
+    console.log('Room Password:', roomPassword);
+
+    requestCreateRoom(roomTitle, isPassword, roomPassword);
+
+    createRoomModal.hide();
+});
+
+document.getElementById('isPassword').addEventListener('change', function() {
+    document.getElementById('roomPassword').disabled = !this.checked;
+});
+
+function createRoom() {
 }

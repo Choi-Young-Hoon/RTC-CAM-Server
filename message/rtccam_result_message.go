@@ -19,6 +19,13 @@ func NewRTCCamErrorMessage(errorMessage string) *RTCCamResultMessage {
 	}
 }
 
+func NewRTCCamLeaveMessage(clientId int64) *RTCCamResultMessage {
+	return &RTCCamResultMessage{
+		ResultMessage: "leave_client",
+		LeaveClientId: clientId,
+	}
+}
+
 func NewRTCCamRoomListMessage(roomManager interface{}) *RTCCamResultMessage {
 	successMessage := NewRTCCamSuccessMessage()
 	successMessage.RoomManager = roomManager
@@ -27,6 +34,8 @@ func NewRTCCamRoomListMessage(roomManager interface{}) *RTCCamResultMessage {
 
 type RTCCamResultMessage struct {
 	ResultMessage string `json:"result_message"`
+
+	LeaveClientId int64 `json:"leave_client_id,omitempty"`
 
 	ErrorMessage string `json:"error_message,omitempty"`
 

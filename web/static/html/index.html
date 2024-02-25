@@ -9,6 +9,8 @@
 
 </head>
 <body>
+
+    <!--방 목록 메뉴 -->
     <div class="offcanvas offcanvas-start" tabindex="-1" id="roomListMenu" aria-labelledby="offcanvasLeftLabel" style="width: 400px;">
         <div class="offcanvas-header">
             <h5 id="offcanvasLeftLabel">방 목록</h5>
@@ -20,9 +22,45 @@
         <button class="btn btn-primary fixed-bottom w-100" type="button" data-bs-toggle="modal" data-bs-target="#createRoomModal">
             방 만들기
         </button>
-
     </div>
 
+
+    <!--방 만들기 모달 -->
+    <div class="modal fade" id="createRoomModal" tabindex="-1" aria-labelledby="createRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createRoomModalLabel">Create Room</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createRoomForm">
+                        <div class="mb-3">
+                            <label for="roomTitle" class="form-label">방 제목</label>
+                            <input type="text" class="form-control" id="roomTitle" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="isPassword">
+                            <label class="form-check-label" for="isPassword">패스워드 설정</label>
+                        </div>
+                        <div class="mb-3">
+                            <label for="roomPassword" class="form-label">패스워드</label>
+                            <input type="password" class="form-control" id="roomPassword" disabled>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="createRoomButton">Create Room</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- 영상통화 화면 -->
     <div class="container">
         <div class="row">
             <div class="col-12">
@@ -37,6 +75,7 @@
     <button class="btn btn-primary fixed-bottom w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#roomListMenu" aria-controls="roomListMenu">
         방 목록 보기
     </button>
+
 
     <script src="/js/rtccam.js"></script>
 </body>

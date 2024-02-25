@@ -10,22 +10,26 @@ import (
 var nextRoomIdMutex sync.Mutex
 var nextRoomId int64 = 0
 
-func NewRoom(title string) *Room {
+func NewRoom(title, password string) *Room {
 	nextRoomIdMutex.Lock()
 	defer nextRoomIdMutex.Unlock()
 
 	nextRoomId++
 	return &Room{
-		Id:      nextRoomId,
-		Title:   title,
-		Clients: make(map[int64]*rtccamclient.RTCCamClient),
+		Id:         nextRoomId,
+		Title:      title,
+		IsPassword: password != "",
+		Password:   password,
+		Clients:    make(map[int64]*rtccamclient.RTCCamClient),
 	}
 }
 
 type Room struct {
 	Id int64 `json:"id"`
 
-	Title string `json:"title"`
+	Title      string `json:"title"`
+	IsPassword bool   `json:"is_password"`
+	Password   string `json:"-"`
 
 	clientsMutex sync.Mutex
 	Clients      map[int64]*rtccamclient.RTCCamClient `json:"clients"`
@@ -53,8 +57,17 @@ func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) {
 	}
 
 	client.JoinRoomId = 0
-
 	delete(r.Clients, client.ClientId)
+
+	if len(r.Clients) == 0 {
+		roomManager := GetRoomManager()
+		roomManager.RemoveRoom(r)
+	}
+
+	leaveMessage := message.NewRTCCamLeaveMessage(client.ClientId)
+	for _, client := range r.Clients {
+		client.Send(leaveMessage)
+	}
 }
 
 func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, error) {
@@ -66,13 +79,4 @@ func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, error) {
 		return nil, errors.New("Client not found")
 	}
 	return client, nil
-}
-
-func (r *Room) BroadCastToClients(message interface{}) {
-	r.clientsMutex.Lock()
-	defer r.clientsMutex.Unlock()
-
-	for _, client := range r.Clients {
-		client.Send(message)
-	}
 }
