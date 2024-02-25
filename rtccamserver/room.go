@@ -40,6 +40,10 @@ func RoomListHandler(client *rtccamclient.RTCCamClient) {
 }
 
 func RoomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
+	if client.JoinRoomId == roomRequestMessage.JoinRoomId {
+		BroadcastRoomList()
+		return
+	}
 	roomLeave(client)
 
 	roomManager := roommanager.GetRoomManager()
@@ -53,11 +57,6 @@ func RoomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *mess
 	if room.IsPassword && room.Password != roomRequestMessage.Password {
 		log.Println("[RoomJoinHandler] ClientId:", client.ClientId, "Error: Password is incorrect")
 		client.Send(message.NewRTCCamErrorMessage("Password is incorrect"))
-		return
-	}
-
-	if client.JoinRoomId == room.Id {
-		BroadcastRoomList()
 		return
 	}
 

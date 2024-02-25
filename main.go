@@ -28,7 +28,7 @@ func sigStopServer() {
 	}
 }
 
-func startServer() {
+func startServer(isRunningHttps bool) {
 	httpServer = &http.Server{
 		Addr: ":40001",
 	}
@@ -41,16 +41,25 @@ func startServer() {
 
 	infoLog(httpServer.Addr)
 
-	//if err := httpServer.ListenAndServeTLS("cert.pem", "privKey.pem"); err != nil && !errors.Is(err, http.ErrServerClosed) {
-	//	panic(err)
-	//}
-
-	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		panic(err)
+	if isRunningHttps {
+		if err := httpServer.ListenAndServeTLS("cert.pem", "privKey.pem"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			panic(err)
+		}
+	} else {
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			panic(err)
+		}
 	}
 }
 
 func main() {
+	isRunningHttps := false
+	for _, arg := range os.Args[1:] {
+		if arg == "https" {
+			isRunningHttps = true
+		}
+	}
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
 
@@ -60,5 +69,5 @@ func main() {
 		os.Exit(0)
 	}()
 
-	startServer()
+	startServer(isRunningHttps)
 }
