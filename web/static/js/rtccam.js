@@ -12,16 +12,27 @@ var peerVideoStreamMap = new Map();
 var localMediaStream = null;
 var localVideoElement = document.getElementById('localVideo');
 
+var iceServers = "";
+
+var initRoom = false;
+var initConnect = false;
+
+function startLoadingStopTimer() {
+    setTimeout(function() {
+        if (initRoom && initConnect) {
+            loadingDiv.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+    }, 500);
+}
+
 window.onload = function() {
     var loadingDiv = document.getElementById('loadingDiv');
     var overlay = document.getElementById('overlay');
     loadingDiv.style.display = 'block';
     overlay.style.display = 'block';
 
-    setTimeout(function() {
-        loadingDiv.style.display = 'none';
-        overlay.style.display = 'none';
-    }, 1000);
+    startLoadingStopTimer();
 };
 
 var facingMode = 'user';
@@ -130,9 +141,9 @@ function initRTCCamSocket() {
 function handlerConnectMessage(data) {
     console.log("client_id: " + data.client_id);
     myClientId = data.client_id;
-    stunServerUrl = data.stun_addr;
-    turnServerUrl = data.turn_addr;
+    iceServers = data.ice_servers;
     requestRoomList();
+    initConnect = true;
 }
 
 function handlerResultMessage(data) {
@@ -276,11 +287,7 @@ function peerClose(clientId) {
 
 function createPeerConnection(clientId) {
     var peerConnection = new RTCPeerConnection({
-        'iceServers': [
-            {'urls': stunServerUrl},
-            {'urls': turnServerUrl, 'username': 'test', 'credential': 'test'},
-            {'urls': 'turn:kyj9447.iptime.org:50001', 'username': 'test', 'credential': 'test'},
-        ]
+        "iceServers": iceServers
     });
 
     localMediaStream.getTracks().forEach(track => peerConnection.addTrack(track, localMediaStream));
@@ -358,6 +365,8 @@ function showRoomList(roomList) {
         roomElement.innerHTML = htmlString;
         roomListElement.appendChild(roomElement);
     }
+
+    initRoom = true;
 }
 
 function updateVideoElement() {

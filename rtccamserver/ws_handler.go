@@ -44,7 +44,8 @@ func RTCCamWSHandler(w http.ResponseWriter, r *http.Request) {
 	defer RTCCamWSCientClose(client)
 	clientManager.AddClient(client)
 
-	connecMessage := message.NewConnectMessage(client.ClientId, "stun:stun.l.google.com:19302", "turn:choiyh.synology.me:50001")
+	iceServers := message.GetICEServers()
+	connecMessage := message.NewConnectMessage(client.ClientId, iceServers)
 	err = client.Send(connecMessage)
 	if err != nil {
 		log.Println("[RTCCamWSHandler] ConnectMessage ClientId:", client.ClientId, "Send Error:", err)
