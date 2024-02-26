@@ -24,9 +24,44 @@ window.onload = function() {
     }, 1000);
 };
 
+var facingMode = 'user';
+document.getElementById('mobileCameraChange').addEventListener('click', function() {
+    var button = document.getElementById('mobileCameraChange');
+    button.disabled = true;
+
+    if (facingMode === 'user') {
+        facingMode = 'environment';
+    } else {
+        facingMode = 'user';
+    }
+
+    if (localMediaStream) {
+        localMediaStream.getTracks().forEach(track => track.stop());
+    }
+
+    navigator.mediaDevices.getUserMedia({video: { facingMode: facingMode }, audio: true}).then(stream => {
+        peerConnectionMap.forEach((peerConnection, clientId) => {
+            const videoTracks = stream.getVideoTracks();
+            const sender = peerConnection.getSenders().find(s => s.track.kind === videoTracks[0].kind);
+            sender.replaceTrack(videoTracks[0]).then(r => {
+                console.log('Replaced video track:', r);
+            });
+        });
+
+        localMediaStream = stream;
+
+        localVideoElement.srcObject = stream;
+        localVideoElement.onloadedmetadata = function(e) {
+            localVideoElement.play();
+        }
+    }).catch(error => {
+        alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
+    }).finally(() => {
+        button.disabled = false;
+    });;
+});
+
 document.addEventListener('DOMContentLoaded', function () {
-
-
     document.querySelector('button[data-bs-target="#roomListMenu"]').click();
 
     initRTCCamSocket();
@@ -40,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }).catch(error => {
         alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
-    });
+    })
 });
 
 localVideoElement.addEventListener('click', function() {
@@ -120,14 +155,7 @@ function handlerOfferMessage(data) {
     peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
     peerConnection.createAnswer().then(function(answer) {
         peerConnection.setLocalDescription(answer);
-        rtcCamSocket.send(JSON.stringify({
-            signaling: {
-                request_type: 'answer',
-                request_client_id: myClientId,
-                response_client_id: data.request_client_id,
-                answer: answer,
-            }
-        }));
+        requestAnswer(data.request_client_id, answer);
     });
 }
 
@@ -191,6 +219,39 @@ async function requestRoomLeave(clientId) {
     }));
 }
 
+function requestOffer(clientId, offer) {
+    rtcCamSocket.send(JSON.stringify({
+        signaling: {
+            request_type: 'offer',
+            request_client_id: myClientId,
+            response_client_id: clientId,
+            offer: offer,
+        }
+    }));
+}
+
+function requestAnswer(clientId, answer) {
+    rtcCamSocket.send(JSON.stringify({
+        signaling: {
+            request_type: 'answer',
+            request_client_id: myClientId,
+            response_client_id: clientId,
+            answer: answer,
+        }
+    }));
+}
+
+function requestCandidate(clientId, candidate) {
+    rtcCamSocket.send(JSON.stringify({
+        signaling: {
+            request_type: 'candidate',
+            request_client_id: myClientId,
+            response_client_id: clientId,
+            candidate: candidate,
+        }
+    }));
+}
+
 function startStreaming() {
     for (let clientId in roomClients) {
         let clientIdInt = parseInt(clientId);
@@ -198,14 +259,7 @@ function startStreaming() {
         let peerConnection = peerConnectionMap.get(clientIdInt);
         peerConnection.createOffer().then(function(offer) {
             peerConnection.setLocalDescription(offer);
-            rtcCamSocket.send(JSON.stringify({
-                signaling: {
-                    request_type: 'offer',
-                    request_client_id: myClientId,
-                    response_client_id: clientIdInt,
-                    offer: offer,
-                }
-            }));
+            requestOffer(clientIdInt, offer);
         });
     }
 
@@ -233,17 +287,21 @@ function createPeerConnection(clientId) {
 
     peerConnection.onicecandidate = function(event) {
         if (event.candidate) {
-            rtcCamSocket.send(JSON.stringify({
-                signaling: {
-                    request_type: 'candidate',
-                    request_client_id: myClientId,
-                    response_client_id: clientId,
-                    candidate: event.candidate,
-                }
-            }));
+            requestCandidate(clientId, event.candidate);
         }
     }
 
+    peerConnection.onnegotiationneeded = function() {
+        peerConnection.createOffer().then(function(offer) {
+            return peerConnection.setLocalDescription(offer);
+        })
+            .then(function() {
+                requestOffer(clientId, peerConnection.localDescription)
+            })
+            .catch(function(error) {
+                console.error("Error creating offer: ", error);
+            });
+    };
     peerConnection.ontrack = function(event) {
         peerVideoStreamMap.set(clientId, event.streams[0]);
     }

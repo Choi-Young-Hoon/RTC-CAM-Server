@@ -1,3 +1,13 @@
+#mobileButton {
+    display: none;  /* 기본적으로 버튼을 숨깁니다 */
+}
+
+@media screen and (max-width: 768px) {  /* 화면 크기가 768px 이하일 때 (일반적으로 모바일 화면) */
+    #mobileButton {
+        display: block;  /* 버튼을 보이게 합니다 */
+    }
+}
+
 #overlay {
     background: rgba(0, 0, 0, 0.5);
     bottom: 0;
