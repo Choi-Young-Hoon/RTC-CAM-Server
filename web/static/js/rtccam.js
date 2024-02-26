@@ -1,5 +1,5 @@
 var rtcCamSocket = null;
-var rtcCamWSServerUrl = 'ws://' + window.location.hostname + ':40001/rtccam';
+var rtcCamWSServerUrl = "{{.WebSocketURL}}";
 
 var myClientId = 0;
 var stunServerUrl = null;
