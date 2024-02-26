@@ -7,7 +7,43 @@ import (
 	"rtccam/rtccamclient"
 )
 
-func BroadcastRoomList() {
+func NewRoomMessageDispatcher() *RoomMessageDispatcher {
+	roomMessageDispatcher := &RoomMessageDispatcher{
+		handles: make(map[string]RoomMessageHandle),
+	}
+
+	roomMessageDispatcher.AddHandleHandler(message.RoomRequestTypeCreateRoom, roomCreateHandler)
+	roomMessageDispatcher.AddHandleHandler(message.RoomRequestTypeRoomList, roomListHandler)
+	roomMessageDispatcher.AddHandleHandler(message.RoomRequestTypeJoinRoom, roomJoinHandler)
+	roomMessageDispatcher.AddHandleHandler(message.RoomRequestTypeLeaveRoom, roomLeaveHandler)
+
+	return roomMessageDispatcher
+}
+
+type RoomMessageHandle func(*rtccamclient.RTCCamClient, *message.RoomRequestMessage)
+
+type RoomMessageDispatcher struct {
+	handles map[string]RoomMessageHandle
+}
+
+func (r *RoomMessageDispatcher) AddHandleHandler(requestType string, handle RoomMessageHandle) {
+	r.handles[requestType] = handle
+}
+
+func (r *RoomMessageDispatcher) RoomHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
+	log.Println("[RoomHandler] ClientId:", client.ClientId, "RequestType:", roomRequestMessage.RequestType)
+
+	handle, ok := r.handles[roomRequestMessage.RequestType]
+	if !ok {
+		log.Println("[RoomHandler] ClientId:", client.ClientId, "Error: Not Found RequestType:", roomRequestMessage.RequestType)
+		client.Send(message.NewRTCCamErrorMessage("Not Found RequestType"))
+		return
+	}
+
+	handle(client, roomRequestMessage)
+}
+
+func broadcastRoomList() {
 	roomManager := roommanager.GetRoomManager()
 	roomListMessage := message.NewRTCCamRoomListMessage(roomManager)
 
@@ -15,8 +51,8 @@ func BroadcastRoomList() {
 	clientManager.Broadcast(roomListMessage)
 }
 
-func RoomCreateHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
-	log.Println("[RoomCreateHandler] Start ClientId:", client.ClientId, "Title:", roomRequestMessage.Title)
+func roomCreateHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
+	log.Println("[roomCreateHandler] Start ClientId:", client.ClientId, "Title:", roomRequestMessage.Title)
 	roomManager := roommanager.GetRoomManager()
 	if roomRequestMessage.Title == "" {
 		client.Send(message.NewRTCCamErrorMessage("Title is empty"))
@@ -26,22 +62,22 @@ func RoomCreateHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *me
 	roomManager.AddRoom(room)
 
 	roomRequestMessage.JoinRoomId = room.Id
-	RoomJoinHandler(client, roomRequestMessage)
+	roomJoinHandler(client, roomRequestMessage)
 }
 
-func RoomListHandler(client *rtccamclient.RTCCamClient) {
+func roomListHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
 	roomManager := roommanager.GetRoomManager()
 	roomListMessage := message.NewRTCCamRoomListMessage(roomManager)
 	err := client.Send(roomListMessage)
 	if err != nil {
-		log.Println("[RoomListHandler] ClientId:", client.ClientId, "Error:", err)
+		log.Println("[roomListHandler] ClientId:", client.ClientId, "Error:", err)
 		return
 	}
 }
 
-func RoomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
+func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
 	if client.JoinRoomId == roomRequestMessage.JoinRoomId {
-		BroadcastRoomList()
+		broadcastRoomList()
 		return
 	}
 	roomLeave(client)
@@ -49,25 +85,25 @@ func RoomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *mess
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(roomRequestMessage.JoinRoomId)
 	if err != nil {
-		log.Println("[RoomJoinHandler] ClientId:", client.ClientId, "Error:", err)
+		log.Println("[roomJoinHandler] ClientId:", client.ClientId, "Error:", err)
 		client.Send(message.NewRTCCamErrorMessage(err.Error()))
 		return
 	}
 
 	if room.IsPassword && room.Password != roomRequestMessage.Password {
-		log.Println("[RoomJoinHandler] ClientId:", client.ClientId, "Error: Password is incorrect")
+		log.Println("[roomJoinHandler] ClientId:", client.ClientId, "Error: Password is incorrect")
 		client.Send(message.NewRTCCamErrorMessage("Password is incorrect"))
 		return
 	}
 
-	log.Println("[RoomJoinHandler] ClientId:", client.ClientId, "JoinRoomId:", room.Id)
+	log.Println("[roomJoinHandler] ClientId:", client.ClientId, "JoinRoomId:", room.Id)
 	room.JoinClient(client)
-	BroadcastRoomList()
+	broadcastRoomList()
 }
 
-func RoomLeaveHandler(client *rtccamclient.RTCCamClient) {
+func roomLeaveHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
 	roomLeave(client)
-	BroadcastRoomList()
+	broadcastRoomList()
 }
 
 func roomLeave(client *rtccamclient.RTCCamClient) {
@@ -78,30 +114,11 @@ func roomLeave(client *rtccamclient.RTCCamClient) {
 			return
 		}
 
-		log.Println("[RoomLeaveHandler] ClientId:", client.ClientId, "Error:", err)
+		log.Println("[roomLeaveHandler] ClientId:", client.ClientId, "Error:", err)
 		client.Send(message.NewRTCCamErrorMessage(err.Error()))
 		return
 	}
 
-	log.Println("[RoomLeaveHandler] ClientId:", client.ClientId, "LeaveRoomId:", room.Id)
+	log.Println("[roomLeaveHandler] ClientId:", client.ClientId, "LeaveRoomId:", room.Id)
 	room.LeaveClient(client)
-}
-
-func RoomHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
-	log.Println("[RoomHandler] ClientId:", client.ClientId, "RequestType:", roomRequestMessage.RequestType)
-
-	switch roomRequestMessage.RequestType {
-	case message.RoomRequestTypeCreateRoom:
-		RoomCreateHandler(client, roomRequestMessage)
-		break
-	case message.RoomRequestTypeRoomList:
-		RoomListHandler(client)
-		break
-	case message.RoomRequestTypeJoinRoom:
-		RoomJoinHandler(client, roomRequestMessage)
-		break
-	case message.RoomRequestTypeLeaveRoom:
-		RoomLeaveHandler(client)
-		break
-	}
 }

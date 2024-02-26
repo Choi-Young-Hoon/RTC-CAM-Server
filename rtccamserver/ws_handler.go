@@ -29,7 +29,7 @@ func RTCCamWSCientClose(client *rtccamclient.RTCCamClient) {
 
 	room.LeaveClient(client)
 
-	BroadcastRoomList()
+	broadcastRoomList()
 }
 
 func RTCCamWSHandler(w http.ResponseWriter, r *http.Request) {

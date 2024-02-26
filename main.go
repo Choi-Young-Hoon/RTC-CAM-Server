@@ -35,6 +35,7 @@ func startServer(isRunningHttps bool) {
 
 	fs := http.FileServer(http.Dir("./web/static"))
 	http.Handle("/js/", fs)
+	http.Handle("/css/", fs)
 
 	http.HandleFunc("/", rtccamweb.HTTPIndexHandler)
 	http.HandleFunc("/rtccam", rtccamserver.RTCCamWSHandler)

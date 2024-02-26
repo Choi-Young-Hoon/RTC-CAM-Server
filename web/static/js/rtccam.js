@@ -12,7 +12,21 @@ var peerVideoStreamMap = new Map();
 var localMediaStream = null;
 var localVideoElement = document.getElementById('localVideo');
 
+window.onload = function() {
+    var loadingDiv = document.getElementById('loadingDiv');
+    var overlay = document.getElementById('overlay');
+    loadingDiv.style.display = 'block';
+    overlay.style.display = 'block';
+
+    setTimeout(function() {
+        loadingDiv.style.display = 'none';
+        overlay.style.display = 'none';
+    }, 1000);
+};
+
 document.addEventListener('DOMContentLoaded', function () {
+
+
     document.querySelector('button[data-bs-target="#roomListMenu"]').click();
 
     initRTCCamSocket();
@@ -311,7 +325,7 @@ function updateVideoElement() {
         }
 */
         let colDiv = document.createElement('div');
-        colDiv.className = "col-3";
+        colDiv.className = "col-sm-6 col-md-4 col-lg-3 col-xl-2";
 
         let videoElem = document.createElement('video');
         videoElem.srcObject = stream;

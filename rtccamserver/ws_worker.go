@@ -6,6 +6,8 @@ import (
 )
 
 func RTCCamServerRun(client *rtccamclient.RTCCamClient) {
+	roomMessageDispatcher := NewRoomMessageDispatcher()
+
 	for {
 		message, err := client.Recv()
 		if err != nil {
@@ -14,7 +16,7 @@ func RTCCamServerRun(client *rtccamclient.RTCCamClient) {
 		}
 
 		if message.Room != nil {
-			RoomHandler(client, message.Room)
+			roomMessageDispatcher.RoomHandler(client, message.Room)
 		} else if message.Signaling != nil {
 			SignalingHandler(client, message.Signaling)
 		}
