@@ -1,74 +1,64 @@
 package main
 
 import (
-	"context"
-	"errors"
-	"net/http"
+	"flag"
+	"fmt"
+	"log"
 	"os"
 	"os/signal"
-	"rtccam/rtccamserver"
 	"rtccam/rtccamweb"
 	"syscall"
 )
 
-var httpServer *http.Server
-
-func infoLog(servicePort string) {
-	println("============================================")
-	println("=           RTCCam Server Start            =")
-	println("============================================")
-	println("= ServicePort: " + servicePort + "                      =")
-	println("============================================")
+func infoLog(httpProtocol, servicePort, certPem, privKeyPem string) {
+	fmt.Println("============================================")
+	fmt.Println("=           RTCCam Server Start            =")
+	fmt.Println("=================  Info  ===================")
+	fmt.Println("= HTTP Protocol: ", httpProtocol)
+	fmt.Println("= Service Port: ", servicePort)
+	if httpProtocol == "https" {
+		fmt.Println("= Cert Pem: ", certPem)
+		fmt.Println("= PrivKey Pem: ", privKeyPem)
+	}
+	fmt.Println("============================================")
 
 }
 
-func sigStopServer() {
-	if err := httpServer.Shutdown(context.TODO()); err != nil {
-		panic(err)
+func startServer(httpProtocol, servicePort, certPem, privKeyPem string) {
+	switch httpProtocol {
+	case "http":
+		rtccamweb.StartHTTPServer(servicePort)
+		break
+	case "https":
+		rtccamweb.StartHTTPSServer(servicePort, certPem, privKeyPem)
+		break
+	default:
+		log.Println("Invalid http protocol: " + httpProtocol)
 	}
-}
 
-func startServer(isRunningHttps bool) {
-	httpServer = &http.Server{
-		Addr: ":40001",
-	}
-
-	fs := http.FileServer(http.Dir("./web/static"))
-	http.Handle("/js/", fs)
-	http.Handle("/css/", fs)
-
-	http.HandleFunc("/", rtccamweb.HTTPIndexHandler)
-	http.HandleFunc("/rtccam", rtccamserver.RTCCamWSHandler)
-
-	infoLog(httpServer.Addr)
-
-	if isRunningHttps {
-		if err := httpServer.ListenAndServeTLS("cert.pem", "privKey.pem"); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			panic(err)
-		}
-	} else {
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			panic(err)
-		}
-	}
 }
 
 func main() {
-	isRunningHttps := false
-	for _, arg := range os.Args[1:] {
-		if arg == "https" {
-			isRunningHttps = true
-		}
+	httpProtocol := flag.String("protocol", "http", "http 프로토콜(http, https)")
+	servicePort := flag.String("p", "40001", "포트번호")
+	certPem := flag.String("c", "cert.pem", "인증서 파일")
+	privKeyPem := flag.String("k", "privKey.pem", "개인키 파일")
+	help := flag.Bool("h", false, "도와주세요")
+	flag.Parse()
+
+	if *help {
+		flag.PrintDefaults()
+		os.Exit(0)
 	}
 
+	// Start Server
+	infoLog(*httpProtocol, *servicePort, *certPem, *privKeyPem)
+	go startServer(*httpProtocol, *servicePort, *certPem, *privKeyPem)
+
+	// Stop Server
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
-
-	go func() {
-		<-sigs
-		sigStopServer()
-		os.Exit(0)
-	}()
-
-	startServer(isRunningHttps)
+	<-sigs
+	rtccamweb.StopServer()
+	os.Exit(0)
 }
