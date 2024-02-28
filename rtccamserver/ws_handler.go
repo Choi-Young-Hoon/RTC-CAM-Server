@@ -4,7 +4,6 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"rtccam/message"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
 )
@@ -43,14 +42,6 @@ func RTCCamWSHandler(w http.ResponseWriter, r *http.Request) {
 	client := rtccamclient.NewRTCCamClient(conn)
 	defer RTCCamWSCientClose(client)
 	clientManager.AddClient(client)
-
-	iceServers := message.GetICEServers()
-	connecMessage := message.NewConnectMessage(client.ClientId, iceServers)
-	err = client.Send(connecMessage)
-	if err != nil {
-		log.Println("[RTCCamWSHandler] ConnectMessage ClientId:", client.ClientId, "Send Error:", err)
-		return
-	}
 
 	log.Println("Client Connect Client Addr:", r.RemoteAddr)
 	RTCCamServerRun(client)

@@ -11,13 +11,21 @@ var httpServer *http.Server = &http.Server{}
 var HTTPProtocol string
 
 func initHTTPHandler() {
-	fs := http.FileServer(http.Dir("./web/static"))
 	// http.Handle("/js/", fs)
 	// rtccam.js 웹소켓 서버 주소 동적 삽입.
 	http.HandleFunc("/js/rtccam.js", RTCCAMJavascriptHandler)
-	http.Handle("/css/", fs)
+	http.Handle("/css/", http.FileServer(http.Dir("./web/static")))
+	http.Handle("/img/", http.FileServer(http.Dir("./web/resource/")))
 
 	http.HandleFunc("/", HTTPIndexHandler)
+	http.HandleFunc("/designtest_home", HTTPDesignTestHomeHandler)
+	http.HandleFunc("/designtest_room", HTTPDesignTestRoomHandler)
+	http.HandleFunc("/designtest_room_mobile", HTTPDesignTestRoomMobileHandler)
+
+	http.HandleFunc("/home", HTTPRTCCamHomeHandler)
+	http.HandleFunc("/room", HTTPRTCCamRoomHandler)
+	http.HandleFunc("/room_mobile", HTTPRTCCamRoomMobileHandler)
+
 	http.HandleFunc("/rtccam", rtccamserver.RTCCamWSHandler)
 }
 

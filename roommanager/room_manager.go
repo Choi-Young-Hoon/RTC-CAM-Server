@@ -1,7 +1,7 @@
 package roommanager
 
 import (
-	"errors"
+	"rtccam/rtccamerrors"
 	"sync"
 )
 
@@ -42,7 +42,7 @@ func (rm *RoomManager) GetRoom(roomId int64) (*Room, error) {
 
 	room, ok := rm.Rooms[roomId]
 	if !ok {
-		return nil, errors.New("Room not found")
+		return nil, rtccamerrors.ErrorRoomNotFound
 	}
 	return room, nil
 }

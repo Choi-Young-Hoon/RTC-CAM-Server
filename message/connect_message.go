@@ -1,12 +1,5 @@
 package message
 
-func NewConnectMessage(clientId int64, iceServers []ICEServer) *ConnectMessage {
-	return &ConnectMessage{
-		ClientId:   clientId,
-		ICEServers: iceServers,
-	}
-}
-
 // 'iceServers': [
 //
 //	{'urls': stunServerUrl},
@@ -40,7 +33,14 @@ type ICEServer struct {
 	Credential string `json:"credential,omitempty"`
 }
 
-type ConnectMessage struct {
+func NewConnectResponseMessage(clientId int64) *ConnectReponseMessage {
+	return &ConnectReponseMessage{
+		ClientId:   clientId,
+		ICEServers: GetICEServers(),
+	}
+}
+
+type ConnectReponseMessage struct {
 	ClientId   int64       `json:"client_id"`
 	ICEServers []ICEServer `json:"ice_servers"`
 }

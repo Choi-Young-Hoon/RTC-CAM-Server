@@ -1,10 +1,12 @@
 package rtccamserver
 
 import (
+	"fmt"
 	"log"
 	"rtccam/message"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
+	"rtccam/rtccamerrors"
 )
 
 func NewRoomMessageDispatcher() *RoomMessageDispatcher {
@@ -36,7 +38,7 @@ func (r *RoomMessageDispatcher) RoomHandler(client *rtccamclient.RTCCamClient, r
 	handle, ok := r.handles[roomRequestMessage.RequestType]
 	if !ok {
 		log.Println("[RoomHandler] ClientId:", client.ClientId, "Error: Not Found RequestType:", roomRequestMessage.RequestType)
-		client.Send(message.NewRTCCamErrorMessage("Not Found RequestType"))
+		client.Send(message.NewRTCCamErrorMessage(rtccamerrors.ErrorRequestTypeError.Error()))
 		return
 	}
 
@@ -52,13 +54,17 @@ func broadcastRoomList() {
 }
 
 func roomCreateHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *message.RoomRequestMessage) {
-	log.Println("[roomCreateHandler] Start ClientId:", client.ClientId, "Title:", roomRequestMessage.Title)
-	roomManager := roommanager.GetRoomManager()
-	if roomRequestMessage.Title == "" {
-		client.Send(message.NewRTCCamErrorMessage("Title is empty"))
+	log.Println("[roomCreateHandler] Start ClientId:", client.ClientId, "CreateRoomId:", roomRequestMessage.CreateRoomId)
+	waitList := GetCreateRoomWaitList()
+	waitId, err := waitList.Get(roomRequestMessage.CreateRoomId)
+	if err != nil {
+		fmt.Println("[roomCreateHandler] ClientId:", client.ClientId, "Error:", err)
+		client.Send(message.NewRTCCamErrorMessage(err.Error()))
 		return
 	}
-	room := roommanager.NewRoom(roomRequestMessage.Title, roomRequestMessage.Password)
+
+	roomManager := roommanager.GetRoomManager()
+	room := roommanager.NewRoom(waitId.RoomInfo.Title, roomRequestMessage.JoinPassword)
 	roomManager.AddRoom(room)
 
 	roomRequestMessage.JoinRoomId = room.Id
@@ -90,9 +96,9 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *mess
 		return
 	}
 
-	if room.IsPassword && room.Password != roomRequestMessage.Password {
-		log.Println("[roomJoinHandler] ClientId:", client.ClientId, "Error: Password is incorrect")
-		client.Send(message.NewRTCCamErrorMessage("Password is incorrect"))
+	if room.IsPassword && room.Password != roomRequestMessage.JoinPassword {
+		log.Println("[roomJoinHandler] ClientId:", client.ClientId, "Error: JoinPassword is incorrect")
+		client.Send(message.NewRTCCamErrorMessage("JoinPassword is incorrect"))
 		return
 	}
 

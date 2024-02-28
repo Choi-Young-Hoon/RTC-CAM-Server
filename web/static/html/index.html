@@ -71,21 +71,19 @@
     <button id="mobileCameraChange" class="btn btn-primary mobile-only d-md-none d-block" style="position: fixed; top: 0; right: 0;">
         카메라 전환
     </button>
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <video id="localVideo" width="100" height="100" muted></video>
-            </div>
-        </div>
+    <div id="videoContainer" class="videoContainer">
+        <video class="fullscreen-video" id="localVideo" width="100" height="100" muted></video>
     </div>
+
 
     <div id="peerVideos">
     </div>
 
-    <button class="btn btn-primary fixed-bottom w-90 btn-height" type="button" data-bs-toggle="offcanvas" data-bs-target="#roomListMenu" aria-controls="roomListMenu">
+    <button id="roomListButton" class="btn btn-primary fixed-bottom w-90 btn-height" type="button" data-bs-toggle="offcanvas" data-bs-target="#roomListMenu" aria-controls="roomListMenu">
         방 목록 보기
     </button>
 
+    <script src="/js/rtccam.js"></script>
     <!-- loading -->
     <div id="overlay" style="display: none;"></div>
     <div class="card" id="loadingDiv">
@@ -97,6 +95,5 @@
         </div>
     </div>
 
-    <script src="/js/rtccam.js"></script>
 </body>
 </html>

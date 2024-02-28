@@ -1,10 +1,12 @@
 package message
 
-func NewRTCCamMessage() *RTCCamMessage {
-	return &RTCCamMessage{}
+func NewRTCCamRequestMessage() *RTCCamRequestMessage {
+	return &RTCCamRequestMessage{}
 }
 
-type RTCCamMessage struct {
-	Room      *RoomRequestMessage `json:"room,omitempty"`
-	Signaling *SignalingMessage   `json:"signaling,omitempty"`
+type RTCCamRequestMessage struct {
+	Room         *RoomRequestMessage         `json:"room,omitempty"`
+	Signaling    *SignalingMessage           `json:"signaling,omitempty"`
+	Connect      *ConnectRequestMessage      `json:"connect,omitempty"`
+	CreateRoomId *CreateRoomIdRequestMessage `json:"create_room_url,omitempty"`
 }

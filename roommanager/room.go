@@ -1,9 +1,9 @@
 package roommanager
 
 import (
-	"errors"
 	"rtccam/message"
 	"rtccam/rtccamclient"
+	"rtccam/rtccamerrors"
 	"sync"
 )
 
@@ -35,7 +35,7 @@ type Room struct {
 	Clients      map[int64]*rtccamclient.RTCCamClient `json:"clients"`
 }
 
-func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) {
+func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) error {
 	r.clientsMutex.Lock()
 	defer r.clientsMutex.Unlock()
 
@@ -44,16 +44,21 @@ func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) {
 	r.Clients[client.ClientId] = client
 
 	joinSuccessMessage := message.NewRTCCamJoinSuccessMessage()
-	client.Send(joinSuccessMessage)
+	err := client.Send(joinSuccessMessage)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) {
+func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) error {
 	r.clientsMutex.Lock()
 	defer r.clientsMutex.Unlock()
 
 	_, ok := r.Clients[client.ClientId]
 	if !ok {
-		return
+		return nil
 	}
 
 	client.JoinRoomId = 0
@@ -66,8 +71,13 @@ func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) {
 
 	leaveMessage := message.NewRTCCamLeaveMessage(client.ClientId)
 	for _, client := range r.Clients {
-		client.Send(leaveMessage)
+		err := client.Send(leaveMessage)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, error) {
@@ -76,7 +86,7 @@ func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, error) {
 
 	client, ok := r.Clients[clientId]
 	if !ok {
-		return nil, errors.New("Client not found")
+		return nil, rtccamerrors.ErrorClientNotFound
 	}
 	return client, nil
 }

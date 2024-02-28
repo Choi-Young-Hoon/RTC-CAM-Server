@@ -19,6 +19,10 @@ func RTCCamServerRun(client *rtccamclient.RTCCamClient) {
 			roomMessageDispatcher.RoomHandler(client, message.Room)
 		} else if message.Signaling != nil {
 			SignalingHandler(client, message.Signaling)
+		} else if message.Connect != nil {
+			ConnectHandler(client, message.Connect)
+		} else if message.CreateRoomId != nil {
+			CreateRoomUrlHandler(client, message.CreateRoomId)
 		}
 	}
 }

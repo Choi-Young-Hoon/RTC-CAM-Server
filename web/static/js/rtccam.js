@@ -17,13 +17,44 @@ var iceServers = "";
 var initRoom = false;
 var initConnect = false;
 
+var hideButtonIds = ['roomListButton'];
+
+function localVideoFullScreen() {
+    hideButtonIds.forEach(function(buttonId) {
+        var buttonElement = document.getElementById(buttonId);
+        buttonElement.style.display = 'none';
+    });
+
+    localFullScreen(true);
+}
+
+function localVideoExitFullScreen() {
+    hideButtonIds.forEach(function(buttonId) {
+        var buttonElement = document.getElementById(buttonId);
+        buttonElement.style.display = 'block';
+    });
+    localFullScreen(false);
+}
+
+function localFullScreen(isFullScreen) {
+    var videoContainer = document.getElementById('videoContainer');
+    if (!isFullScreen) {
+        videoContainer.style.display = "none";
+    } else {
+        videoContainer.style.display = "flex";
+    }
+}
+
+
 function startLoadingStopTimer() {
     setTimeout(function() {
         if (initRoom && initConnect) {
             loadingDiv.style.display = 'none';
             overlay.style.display = 'none';
+        } else {
+            startLoadingStopTimer();
         }
-    }, 500);
+    }, 1000);
 }
 
 window.onload = function() {
@@ -65,6 +96,9 @@ document.getElementById('mobileCameraChange').addEventListener('click', function
         localVideoElement.onloadedmetadata = function(e) {
             localVideoElement.play();
         }
+
+        videoContainer.appendChild(localVideoElement);
+        document.body.insertBefore(videoContainer, document.body.firstChild);
     }).catch(error => {
         alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
     }).finally(() => {
@@ -179,6 +213,8 @@ function handlerAnswerMessage(data) {
 function handlerCandidateMessage(data) {
     console.log("candidate received");
     var peerConnection = peerConnectionMap.get(data.request_client_id);
+    console.log("candidate data peerConnection: " + peerConnection);
+    console.log("candidate data candidate: " + data.candidate);
     peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
 }
 
@@ -322,13 +358,7 @@ function createPeerConnection(clientId) {
         }
     }
 
-    if (clientId === 0) {
-
-    } else {
-        peerConnectionMap.set(clientId, peerConnection);
-    }
-
-
+    peerConnectionMap.set(clientId, peerConnection);
 }
 
 function showRoomList(roomList) {
@@ -378,21 +408,15 @@ function updateVideoElement() {
     let rowDiv = null;
     let count = 0;
 
-    if (count % 2 === 0) {
-        rowDiv = document.createElement('div');
-        rowDiv.className = "row";
-        peerVideosDiv.appendChild(rowDiv);
-    }
-
     peerVideoStreamMap.forEach((stream, clientId) => {
-      /*  if (count % 2 === 0) {
+        if (count % 2 === 0) {
             rowDiv = document.createElement('div');
             rowDiv.className = "row";
             peerVideosDiv.appendChild(rowDiv);
         }
-*/
+
         let colDiv = document.createElement('div');
-        colDiv.className = "col-sm-6 col-md-4 col-lg-3 col-xl-2";
+        colDiv.className = "col-6";
 
         let videoElem = document.createElement('video');
         videoElem.srcObject = stream;
