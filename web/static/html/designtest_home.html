@@ -1,0 +1,325 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RTC-CAM</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body {
+            padding-top: 70px;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            height: 50px;
+        }
+
+        nav .title {
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        nav .title img {
+            margin-right: 10px;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        nav ul li a {
+            display: block;
+            padding: 10px 15px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            font-size: 18px;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+
+        #mySidenav {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            transition: width 1s;
+            padding-top: 60px;
+        }
+
+        #mySidenav a {
+            text-decoration: none;
+            font-size: 36px;
+            text-align: right;
+            color: #818181;
+            display: block;
+            padding-right: 20px; /* 오른쪽 패딩 추가 */
+            transition: 1s;
+        }
+
+        #mySidenav a:hover {
+            color: #f1f1f1;
+        }
+
+        #mySidenav tbody tr:first-child:hover {
+            background-color: inherit; /* 배경색을 상위 요소의 배경색과 동일하게 유지 */
+        }
+
+        #mySidenav tr:hover {
+            background-color: #f1f1f1;
+            color: #111;
+        }
+
+        #mySidenav tr {
+            white-space: nowrap;
+            transition: width 1s;
+        }
+
+        #mySidenav td {
+            white-space: nowrap;
+            transition: width 1s;
+        }
+
+        .container {
+            padding-bottom: 20px;
+        }
+
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 600px;
+            text-align: left;
+        }
+
+        .card img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .overlay {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            overflow-x: hidden;
+        }
+    </style>
+    <style id="mttstyle">
+        #mttContainer {
+            left: 0 !important;
+            top: 0 !important;
+            width: 1000px !important;
+            margin-left: -500px !important;
+            position: fixed !important;
+            z-index: 100000200 !important;
+            background: none !important;
+            pointer-events: none !important;
+            display: inline-block !important;
+            visibility: visible !important;
+            white-space: pre-line;
+        }
+
+        .tippy-box[data-theme~="custom"] {
+            font-size: 14px !important;
+            max-width: 200px !important;
+            text-align: center !important;
+            backdrop-filter: blur(4px) !important;
+            background-color: #000000b8 !important;
+            color: #ffffffff !important;
+            overflow-wrap: break-word !important;
+            font-family: -apple-system, BlinkMacSystemFont,
+            "Segoe UI", "Roboto", "Oxygen",
+            "Ubuntu", "Cantarell", "Fira Sans",
+            "Droid Sans", "Helvetica Neue", sans-serif !important;
+            border: 1px solid #ffffff00;
+            white-space: pre-line;
+        }
+
+        [data-tippy-root] {
+            display: inline-block !important;
+            visibility: visible !important;
+            position: absolute !important;
+        }
+
+        .tippy-box[data-theme~='custom'][data-placement^='top'] > .tippy-arrow::before {
+            border-top-color: #000000b8 !important;
+        }
+
+        .tippy-box[data-theme~='custom'][data-placement^='bottom'] > .tippy-arrow::before {
+            border-bottom-color: #000000b8 !important;
+        }
+
+        .tippy-box[data-theme~='custom'][data-placement^='left'] > .tippy-arrow::before {
+            border-left-color: #000000b8 !important;
+        }
+
+        .tippy-box[data-theme~='custom'][data-placement^='right'] > .tippy-arrow::before {
+            border-right-color: #000000b8 !important;
+        }
+
+        .mtt-highlight {
+            background-color: #21dc6d40 !important;
+            position: absolute !important;
+            z-index: 100000100 !important;
+            pointer-events: none !important;
+            display: inline !important;
+            border-radius: 3px !important;
+        }
+
+        .mtt-image {
+            width: 180px !important;
+            border-radius: 3px !important;
+        }
+
+        .ocr_text_div {
+            position: absolute;
+            opacity: 0.7;
+            color: transparent !important;
+            border: 2px solid CornflowerBlue;
+            background: none !important;
+            border-radius: 3px !important;
+        }</style>
+    <style id="mttstyleSubtitle">
+        #ytp-caption-window-container .ytp-caption-segment {
+            cursor: text !important;
+            user-select: text !important;
+            font-family: -apple-system, BlinkMacSystemFont,
+            "Segoe UI", "Roboto", "Oxygen",
+            "Ubuntu", "Cantarell", "Fira Sans",
+            "Droid Sans", "Helvetica Neue", sans-serif !important;
+        }
+
+        .caption-visual-line {
+            display: flex !important;
+            align-items: stretch !important;
+        }
+
+        .captions-text .caption-visual-line:first-of-type:after {
+            content: '⣿⣿';
+            background-color: #000000b8;
+            display: inline-block;
+            vertical-align: top;
+            opacity: 0;
+            transition: opacity 0.7s ease-in-out;
+        }
+
+        .captions-text:hover .caption-visual-line:first-of-type:after {
+            opacity: 1;
+        }
+
+        .ytp-pause-overlay {
+            display: none !important;
+        }
+
+        .ytp-expand-pause-overlay .caption-window {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+<div id="rtccamOverlay" class="overlay" onclick="closeNav()" style="width: 0px;"></div>
+<nav>
+    <div class="title"><img src="https://choiyh.synology.me:40001/img/rtccam_logo.webp" alt="RTC-CAM Logo" class="logo">RTC-CAM
+    </div>
+    <ul>
+        <li><a href="javascript:void(0)" onclick="openNav()">방목록</a></li>
+        <li><a href="#">방 만들기</a></li>
+    </ul>
+</nav>
+<div id="mySidenav" class="sidenav" style="width: 0px;">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+    <table class="room-table">
+        <tbody>
+        <tr>
+            <th>번호</th>
+            <th>제목</th>
+            <th>인원</th>
+        </tr>
+        <tr onclick="moveRoom()">
+            <td>1</td>
+            <td>샘플 방</td>
+            <td>1/10</td>
+        </tr>
+        <tr onclick="moveRoom()">
+            <td>2</td>
+            <td>공부방</td>
+            <td>5/10</td>
+        </tr>
+        <!-- 여기에 더 많은 방 추가 가능 -->
+        </tbody>
+    </table>
+</div>
+
+<main class="container">
+    <div class="card">
+        <img src="https://choiyh.synology.me:40001/img/rtccam_welcome.webp" alt="환영합니다">
+        <h2>RTC-CAM에 오신 것을 환영합니다</h2>
+        <p>RTC-CAM을 사용하여 어디서나 실시간으로 커뮤니케이션할 수 있습니다. 방을 만들고, 친구들을 초대하여 비디오, 오디오 채팅을 즐겨보세요.</p>
+    </div>
+    <div class="card">
+        <img src="https://choiyh.synology.me:40001/img/rtccam_function_introduction.webp" alt="기능 소개">
+        <h2>기능 소개</h2>
+        <p>RTC-CAM은 다양한 기능을 제공합니다. 실시간 비디오 스트리밍, 오디오 채팅, 화면 공유 등 다양한 기능을 통해 원활한 온라인 커뮤니케이션을 지원합니다.</p>
+    </div>
+    <div class="card">
+        <img src="https://choiyh.synology.me:40001/img/rtccam_start.webp" alt="시작하기">
+        <h2>시작하기</h2>
+        <p>지금 바로 시작하여 팀원들과 연결해 보세요. 간단한 방 만들기 버튼을 클릭하여 새로운 회의를 시작할 수 있습니다.</p>
+    </div>
+</main>
+
+<script>
+    function moveRoom() {
+        var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            window.location.href = "/designtest_room_mobile";
+        } else {
+            window.location.href = "/designtest_room";
+        }
+    }
+
+    function openNav() {
+        if (document.getElementById('mySidenav').style.width !== "0px") {
+            closeNav();
+        } else {
+            document.getElementById("mySidenav").style.width = "300px";
+            document.getElementById("rtccamOverlay").style.width = "100%";
+        }
+    }
+
+    function closeNav() {
+        document.getElementById("mySidenav").style.width = "0";
+        document.getElementById("rtccamOverlay").style.width = "0";
+    }
+</script>
+
+<div id="mttContainer" class="notranslate" aria-expanded="false" style="transform: translate(637px, 300px);"></div>
+</body>
+</html>
