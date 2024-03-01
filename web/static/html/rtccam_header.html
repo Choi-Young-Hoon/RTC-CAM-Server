@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RTC-CAM</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+    <link href="/css/rtccam_default.css" rel="stylesheet">
+    {{if eq .Page "Home"}}
+    <link href="/css/rtccam_home.css" rel="stylesheet">
+    {{else}}
+    <link href="/css/rtccam_room.css" rel="stylesheet">
+    {{end}}
+</head>
+<body>
+
+<!-- 타이틀 메뉴 -->
+<nav>
+    <div class="title"><img src="https://choiyh.synology.me:40001/img/rtccam_logo.webp" alt="RTC-CAM Logo" class="logo">RTC-CAM
+    </div>
+    <ul>
+        <li><a class="bright-blue-button" href="javascript:void(0)" onclick="openMenu()">방 목록</a></li>
+        <li><a class="bright-blue-button" href="javascript:void(0)" onclick="showCreateRoomModal()">방 만들기</a></li>
+    </ul>
+</nav>
+
+
+<!--방 목록 메뉴 -->
+<div id="rtccamOverlay" class="overlay" onclick="closeMenu()" style="width: 0px;"></div>
+<div id="mySidenav" class="sidenav" style="width: 0px;">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeMenu()">×</a>
+    <table class="room-table" id="roomTable">
+        <tbody>
+        <tr>
+            <th>번호</th>
+            <th>제목</th>
+            <th>인원</th>
+        </tr>
+        <tr onclick="moveRoom()">
+            <td>1</td>
+            <td>샘플 방</td>
+            <td>1/10</td>
+        </tr>
+        <tr onclick="moveRoom()">
+            <td>2</td>
+            <td>공부방</td>
+            <td>5/10</td>
+        </tr>
+        <!-- 여기에 더 많은 방 추가 가능 -->
+        </tbody>
+    </table>
+</div>
+
+<!-- 방 생성 모달 -->
+<div id="createRoomModal" class="modal">
+    <div class="modal-content">
+        <a class="modalClose" onclick="hideCreateRoomModal()">&times;</a>
+        <h2>방 만들기</h2>
+        <label for="roomTitle">방 제목:</label>
+        <input type="text" id="roomTitle" name="roomTitle" required><br><br>
+
+        <label for="usePassword">패스워드 사용:</label>
+        <input type="checkbox" id="usePassword" name="usePassword"><br><br>
+
+        <div id="passwordField" class="hidden">
+            <label for="roomPassword">암호:</label>
+            <input id="roomPassword" name="roomPassword" disabled><br><br>
+        </div>
+
+        <button onclick="createRoom()">방 생성</button>
+    </div>
+
+</div>

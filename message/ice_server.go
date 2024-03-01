@@ -32,15 +32,3 @@ type ICEServer struct {
 	UserName   string `json:"username,omitempty"`
 	Credential string `json:"credential,omitempty"`
 }
-
-func NewConnectResponseMessage(clientId int64) *ConnectReponseMessage {
-	return &ConnectReponseMessage{
-		ClientId:   clientId,
-		ICEServers: GetICEServers(),
-	}
-}
-
-type ConnectReponseMessage struct {
-	ClientId   int64       `json:"client_id"`
-	ICEServers []ICEServer `json:"ice_servers"`
-}

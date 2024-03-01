@@ -6,9 +6,12 @@ func NewRTCCamSuccessMessage() *RTCCamResponseMessage {
 	}
 }
 
-func NewRTCCamJoinSuccessMessage() *RTCCamResponseMessage {
+func NewRTCCamJoinSuccessMessage(room interface{}, joinClientId int64) *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
 		ResultMessage: "join_success",
+		RoomInfo:      room,
+		ClientId:      joinClientId,
+		ICEServers:    GetICEServers(),
 	}
 }
 
@@ -22,7 +25,7 @@ func NewRTCCamErrorMessage(errorMessage string) *RTCCamResponseMessage {
 func NewRTCCamLeaveMessage(clientId int64) *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
 		ResultMessage: "leave_client",
-		LeaveClientId: clientId,
+		ClientId:      clientId,
 	}
 }
 
@@ -32,10 +35,11 @@ func NewRTCCamRoomListMessage(roomManager interface{}) *RTCCamResponseMessage {
 	return successMessage
 }
 
-func NewRTCCamConnectMessage(clientId int64) *RTCCamResponseMessage {
+func NewRTCCamAuthTokenMessage(authToken string, room interface{}) *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
-		ResultMessage:  "connect_result",
-		ConnectMessage: NewConnectResponseMessage(clientId),
+		ResultMessage: "auth_token",
+		AutoToken:     authToken,
+		RoomInfo:      room,
 	}
 }
 
@@ -45,9 +49,12 @@ type RTCCamResponseMessage struct {
 	ErrorCode    int    `json:"error_code,omitempty"`
 	ErrorMessage string `json:"error_message,omitempty"`
 
-	LeaveClientId int64 `json:"leave_client_id,omitempty"`
+	ClientId int64 `json:"client_id,omitempty"`
 
-	RoomManager interface{} `json:"rooms,omitempty"` // RoomManager 구조체를 넣어줘야한다.
+	AutoToken string `json:"auth_token,omitempty"` // AuthToken 생성 요청시 생성되는 값
 
-	ConnectMessage *ConnectReponseMessage `json:"connect_message,omitempty"`
+	RoomManager interface{} `json:"rooms,omitempty"`     // RoomManager 구조체를 넣어줘야한다.
+	RoomInfo    interface{} `json:"room_info,omitempty"` // Room 구조체를 넣어줘야한다. join_success 시 생성
+
+	ICEServers []ICEServer `json:"ice_servers,omitempty"`
 }

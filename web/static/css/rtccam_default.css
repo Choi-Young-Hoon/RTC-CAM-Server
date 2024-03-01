@@ -1,0 +1,156 @@
+body {
+    padding-top: 10px;
+}
+
+.overlay {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    overflow-x: hidden;
+}
+
+nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.logo {
+    height: 50px;
+}
+
+nav .title {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+nav .title img {
+    margin-right: 10px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+nav ul li a {
+    display: block;
+    padding: 10px 15px;
+    background-color: #f4f4f4;
+    border-radius: 5px;
+    font-size: 18px;
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+#mySidenav {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: width 1s;
+    padding-top: 60px;
+}
+
+#mySidenav a {
+    text-decoration: none;
+    font-size: 36px;
+    text-align: right;
+    color: #818181;
+    display: block;
+    padding-right: 20px; /* 오른쪽 패딩 추가 */
+    transition: 1s;
+}
+
+#mySidenav a:hover {
+    color: #f1f1f1;
+}
+
+#mySidenav tbody tr:first-child:hover {
+    background-color: inherit; /* 배경색을 상위 요소의 배경색과 동일하게 유지 */
+}
+
+#mySidenav tr:hover {
+    background-color: #f1f1f1;
+    color: #111;
+}
+
+#mySidenav tr {
+    white-space: nowrap;
+    transition: width 1s;
+}
+
+#mySidenav td {
+    white-space: nowrap;
+    transition: width 1s;
+}
+
+.bright-blue-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.bright-blue-button:hover {
+    background-color: #0056b3;
+}
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    padding-top: 60px;
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+.modalClose {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+.modalClose:hover,
+.modalClose:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+/* The Hidden password field */
+.hidden {
+    display: none;
+}

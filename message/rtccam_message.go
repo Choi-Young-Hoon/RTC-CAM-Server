@@ -5,8 +5,7 @@ func NewRTCCamRequestMessage() *RTCCamRequestMessage {
 }
 
 type RTCCamRequestMessage struct {
-	Room         *RoomRequestMessage         `json:"room,omitempty"`
-	Signaling    *SignalingMessage           `json:"signaling,omitempty"`
-	Connect      *ConnectRequestMessage      `json:"connect,omitempty"`
-	CreateRoomId *CreateRoomIdRequestMessage `json:"create_room_url,omitempty"`
+	Room                *RoomRequestMessage       `json:"room,omitempty"`
+	Signaling           *SignalingMessage         `json:"signaling,omitempty"`
+	CreateRoomIdRequest *CreateRoomRequestMessage `json:"create_room,omitempty"`
 }

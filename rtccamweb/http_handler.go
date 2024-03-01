@@ -10,60 +10,59 @@ const BasePath = "web/static"
 const BaseHtmlPath = BasePath + "/html"
 const BaseJsPath = BasePath + "/js"
 
-func HTTPIndexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, BaseHtmlPath+"/index.html")
+func HTTPNotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	http.NotFound(w, r)
 }
 
-func HTTPDesignTestHomeHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, BaseHtmlPath+"/designtest_home.html")
-}
-
-func HTTPDesignTestRoomHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, BaseHtmlPath+"/designtest_room.html")
-}
-
-func HTTPDesignTestRoomMobileHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, BaseHtmlPath+"/designtest_room_mobile.html")
+func CreateTemplate() *template.Template {
+	// 항상 요청할때마다 html 파일들을 읽어올 수 없으니 나중에 한번만 읽어오도록 바꿔야한다.
+	t := template.Must(template.ParseGlob(BaseHtmlPath + "/*.html"))
+	return t
 }
 
 func HTTPRTCCamHomeHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, BaseHtmlPath+"/rtccam_home.html")
+	t := CreateTemplate()
+
+	pageData := NewPageData("Home")
+	err := t.ExecuteTemplate(w, "rtccam_home.html", pageData)
+	if err != nil {
+		log.Println("[HTTPRTCCamHomeHandler] Template Execute Error:", err)
+	}
+}
+
+func RoomPageHandler(w http.ResponseWriter, r *http.Request, htmlFile string) {
+	log.Println("[RoomPageHandler] Start")
+
+	t := CreateTemplate()
+	pageData := NewPageData("Room")
+	joinRoom := r.URL.Query().Get("join_room")
+	authToken := r.URL.Query().Get("auth_token")
+
+	if (joinRoom == "") || (authToken == "") {
+		HTTPNotFoundHandler(w, r)
+		return
+	}
+
+	pageData.RoomRequestType = "join_room"
+	pageData.RequestId = joinRoom
+	pageData.AuthToken = authToken
+
+	err := t.ExecuteTemplate(w, htmlFile, pageData)
+	if err != nil {
+		log.Println("[HTTPRTCCamRoomHandler] Template Execute Error:", err)
+	}
 }
 
 func HTTPRTCCamRoomHandler(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles(BaseHtmlPath + "/rtccam_room.html")
-	templateMap := make(map[string]string)
-
-	createRoom := r.URL.Query().Get("create_room")
-	if createRoom != "" {
-		// room?create_room=1 이런식으로 오면 해당 페이지에서
-		// create_room 요청을 보내서 만드는 식으로 진행
-		templateMap["room_request_type"] = "create_room"
-		templateMap["request_id"] = createRoom
-	}
-
-	joinRoom := r.URL.Query().Get("join_room")
-	if joinRoom != "" {
-		templateMap["room_request_type"] = "join_room"
-		templateMap["request_id"] = joinRoom
-	}
-
-	if templateMap["room_request_type"] == "" {
-		http.NotFound(w, r)
-	} else {
-		err := t.Execute(w, templateMap)
-		if err != nil {
-			log.Println("[HTTPRTCCamRoomHandler] Template Execute Error:", err)
-		}
-	}
+	RoomPageHandler(w, r, "rtccam_room.html")
 }
 
 func HTTPRTCCamRoomMobileHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, BaseHtmlPath+"/rtccam_room_mobile.html")
+	RoomPageHandler(w, r, "rtccam_room_mobile.html")
 }
 
-func RTCCAMJavascriptHandler(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles(BaseJsPath + "/rtccam.js")
+func JavascriptHandler(w http.ResponseWriter, r *http.Request, jsFile string) {
+	t, _ := template.ParseFiles(BaseJsPath + "/" + jsFile)
 	webSocketUrl := make(map[string]string)
 
 	if HTTPProtocol == "https" {
@@ -72,4 +71,12 @@ func RTCCAMJavascriptHandler(w http.ResponseWriter, r *http.Request) {
 		webSocketUrl["WebSocketURL"] = "ws://" + r.Host + "/rtccam"
 	}
 	t.Execute(w, webSocketUrl)
+}
+
+func RTCCAMJavascriptHandler(w http.ResponseWriter, r *http.Request) {
+	JavascriptHandler(w, r, "rtccam.js")
+}
+
+func RTCCAMDefaultJavascriptHandler(w http.ResponseWriter, r *http.Request) {
+	JavascriptHandler(w, r, "rtccam_default.js")
 }

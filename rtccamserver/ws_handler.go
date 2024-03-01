@@ -23,6 +23,7 @@ func RTCCamWSCientClose(client *rtccamclient.RTCCamClient) {
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
+		broadcastRoomList()
 		return
 	}
 

@@ -14,7 +14,7 @@ func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMes
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
 		errorMessage := message.NewRTCCamErrorMessage(err.Error())
-		log.Println("[SignalingRouteHander] GetRoom Failed ClientId:", client.ClientId, "JoinRoomId:", client.JoinRoomId, "Error:", err)
+		log.Println("[SignalingRouteHander] GetRoom Failed ClientId:", client.ClientId, "RoomId:", client.JoinRoomId, "Error:", err)
 		client.Send(errorMessage)
 		return
 	}

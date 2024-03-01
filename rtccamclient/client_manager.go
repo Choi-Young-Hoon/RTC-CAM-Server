@@ -19,6 +19,7 @@ func (cm *RTCCamClientManager) AddClient(client *RTCCamClient) {
 	cm.clientsMutex.Lock()
 	defer cm.clientsMutex.Unlock()
 
+	client.GenerateClientId()
 	cm.clients[client.ClientId] = client
 }
 

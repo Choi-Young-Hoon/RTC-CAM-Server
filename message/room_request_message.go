@@ -1,20 +1,17 @@
 package message
 
-var RoomRequestTypeCreateRoom = "create_room"
 var RoomRequestTypeJoinRoom = "join_room"
 var RoomRequestTypeLeaveRoom = "leave_room"
 var RoomRequestTypeRoomList = "room_list"
+var RoomRequestAuthToken = "auth_token"
 
 type RoomRequestMessage struct {
-	RequestType string `json:"request_type, omitempty"`
+	RequestType string `json:"request_type"`
 
-	// 방 생성 클라이언트가 room?create_id=1234 이런식으로 방을 생성하면
-	// 해당 방의 아이디를 클라이언트가 id 값으로 요청을 보내온다
-	CreateRoomId int64 `json:"create_id,omitempty"`
+	// 요청한 방 Id, 패스워드
+	RoomId   int64  `json:"room_id,omitempty"`
+	Password string `json:"password,omitempty"`
 
-	// join_room 요청시 패스워드
-	JoinPassword string `json:"password,omitempty"`
-
-	// 방 접속
-	JoinRoomId int64 `json:"join_room_id,omitempty"`
+	// 방 접속 요청시 사용하는 인증 토큰
+	AuthToken string `json:"auth_token,omitempty"`
 }
