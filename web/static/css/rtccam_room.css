@@ -28,6 +28,7 @@
     }
     .chat-window {
         height: 80vh;
+        width: 35vw;
         display: flex;
         flex-direction: column;
     }
@@ -79,15 +80,48 @@
     padding: 1rem;
 }
 .chat-area {
+    word-wrap: break-word;
     overflow-y: scroll;
+    overflow-x: hidden;
+
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+
     height: calc(100% - 52px);
     margin-bottom: 1rem;
     flex-grow: 1;
 }
+
+.chat-my-message {
+    color: blue;
+    font-size: 15px;
+}
+.chat-sender {
+    color: red;
+    font-size: 15px;
+}
+
+.chat-message {
+    color: black;
+    font-size: 15px;
+
+    display: flex;
+    justify-content: space-between;
+
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
 .input-area {
     overflow-y: auto;
     display: flex;
     gap: 0.5rem;
+}
+.input-area textarea {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
 }
 .input-area textarea {
     width: 80%;
@@ -127,4 +161,19 @@
 
 .participant-name {
     margin-top: 0.5rem;
+}
+
+.room-info-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #ADD8E6;
+    padding: 10px 0;
+    text-align: center;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.room-info-footer div {
+    margin: 0 10px;
+    display: inline-block;
 }

@@ -23,7 +23,12 @@ type RTCCamClient struct {
 	ws         *websocket.Conn
 }
 
+var sendMutex sync.Mutex
+
 func (c *RTCCamClient) Send(message interface{}) error {
+	sendMutex.Lock()
+	defer sendMutex.Unlock()
+
 	return c.ws.WriteJSON(message)
 }
 

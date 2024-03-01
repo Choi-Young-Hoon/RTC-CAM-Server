@@ -22,6 +22,9 @@ function localVideoFullScreen() {
     var titleNav = document.getElementById('titleNav');
     titleNav.style.display= "none";
 
+    var footer = document.getElementById('footer');
+    footer.style.display = "none";
+
     closeMenu();
     clearVideoSection();
     localFullScreen(true);
@@ -31,6 +34,9 @@ function localVideoFullScreen() {
 function localVideoExitFullScreen() {
     var titleNav = document.getElementById('titleNav');
     titleNav.style.display = "flex";
+
+    var footer = document.getElementById('footer');
+    footer.style.display = "flex";
 
     updateVideoElement();
     localFullScreen(false);
@@ -105,13 +111,13 @@ function handlerResultMessage(data) {
     if (data.result_message === "success") {
         showRoomList(data.rooms);
     } else if (data.result_message === "error") {
-        alert(data.error_message);
         moveHome();
     } else if (data.result_message === "join_success") {
         iceServers = data.ice_servers;
         currentClientId = data.client_id;
         joinRoomId = data.room_info.id;
         startStreaming(data.room_info);
+        updateRoomInfo(data.room_info);
     } else if (data.result_message === "leave_client") {
         peerClose(data.client_id);
     }
@@ -269,17 +275,28 @@ function broadCastDataChannelMessage() {
     });
 
     var data = {
-        sender: "나",
+        sender: "나 (참여자 " + currentClientId + ")",
         message: inputMessageElement.value,
     }
-    onChat(data);
+    onChat(data, true);
     inputMessageElement.value = '';
 }
 
-function onChat(data) {
+function onChat(data, isSender) {
     var chatWindowElement = document.getElementById('chatWindow');
-    var chatMessageElement = document.createElement('p');
-    chatMessageElement.textContent = data.sender + ": " + data.message;
+    var chatMessageElement = document.createElement('div');
+
+    var senderSpan = document.createElement('span');
+    senderSpan.className = isSender ? 'chat-my-message' : 'chat-sender';
+    senderSpan.textContent = data.sender + ": ";
+
+    var message = data.message.replace(/\n/g, '<br>');
+    var messageSpan = document.createElement('span');
+    messageSpan.className = 'chat-message';
+    messageSpan.innerHTML = message;
+
+    chatMessageElement.appendChild(senderSpan);
+    chatMessageElement.appendChild(messageSpan);
     chatWindowElement.appendChild(chatMessageElement);
     chatWindowElement.scrollTop = chatWindowElement.scrollHeight;
 }
@@ -336,7 +353,7 @@ function createPeerConnection(clientId) {
 
         receiveChannel.onmessage = function(event) {
             var data = JSON.parse(event.data);
-            onChat(data);
+            onChat(data, false);
         }
     }
     peerConnection.oniceconnectionstatechange = function(event) {
@@ -380,7 +397,7 @@ function createVideoElement(stream, className, clientId, isCurrentVideo) {
     // 새로운 div 요소를 생성합니다.
     var divName = document.createElement('div');
     divName.className = "participant-name";
-    divName.textContent = isCurrentVideo ? "나" : createNickName(clientId);
+    divName.textContent = isCurrentVideo ? "나 (" + createNickName(currentClientId) + ")" : createNickName(clientId);
 
     // div 요소에 video와 divName 요소를 추가합니다.
     div.appendChild(video);
@@ -415,6 +432,18 @@ function updateVideoElement() {
     });
 }
 
+function updateRoomInfo(room) {
+    var roomNumber = document.getElementById('footerRoomNumber');
+    var roomTitle = document.getElementById('footerRoomTitle');
+    var roomParticipants = document.getElementById('footerRoomParticipants');
+    var roomIsPassword = document.getElementById('footerRoomIsPassword');
+
+    roomNumber.textContent = "방번호: " + room.id;
+    roomTitle.textContent = "방제목: " + room.title;
+    roomParticipants.textContent = "인원수: " + Object.keys(room.clients).length;
+    roomIsPassword.textContent = "암호여부: " + (room.is_password ? "있음" : "없음");
+}
+
 function showRoomList(roomList) {
     var roomTable = document.getElementById('roomTable');
 
@@ -429,10 +458,14 @@ function showRoomList(roomList) {
         let cell2 = row.insertCell(1);
         let cell3 = row.insertCell(2);
 
+        if (parseInt(roomId) === joinRoomId) {
+            row.className = "blue-background";
+        }
+
         cell1.innerHTML = room.id;
         cell2.innerHTML = room.title;
 
-        let clientCount = Object.keys(room.clients).length === 0 ? 0 : Object.keys(room.clients).length;
+        let clientCount = Object.keys(room.clients).length;
         cell3.innerHTML = clientCount;
 
         row.onclick = function() {
@@ -518,3 +551,18 @@ function createRoom() {
     requestCreateRoom(roomTitle, isPassword, roomPassword);
     hideCreateRoomModal();
 }
+
+document.getElementById('inputMessage').addEventListener('keydown', function(event) {
+    // Enter 키가 눌렸는지 확인
+    if (event.key === 'Enter') {
+        // Ctrl 키가 눌렸는지 확인
+        if (event.ctrlKey) {
+            // Ctrl + Enter가 눌렸을 때의 동작 (다음 라인으로 이동)
+            this.value += "\n";
+        } else {
+            // Enter만 눌렸을 때의 동작 (메시지 전송)
+            event.preventDefault(); // 기본 동작 (새 줄 추가)을 막음
+            broadCastDataChannelMessage();
+        }
+    }
+});

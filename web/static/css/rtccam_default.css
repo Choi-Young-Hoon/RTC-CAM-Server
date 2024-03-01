@@ -109,6 +109,10 @@ nav ul li a {
     transition: width 1s;
 }
 
+.blue-background {
+    background-color: blueviolet;
+}
+
 .bright-blue-button {
     background-color: #007bff;
     color: white;
@@ -158,3 +162,4 @@ nav ul li a {
 .hidden {
     display: none;
 }
+
