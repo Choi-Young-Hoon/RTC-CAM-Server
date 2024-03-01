@@ -252,6 +252,7 @@ function peerClose(clientId) {
     console.log("[peerClose] peerConnection closed");
     peerConnectionMap.delete(clientId);
     peerVideoStreamMap.delete(clientId);
+    dataChannelMap.delete(clientId);
     updateVideoElement();
 }
 
