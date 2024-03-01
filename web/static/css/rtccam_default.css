@@ -51,14 +51,18 @@ nav ul {
 
 nav ul li a {
     display: block;
-    padding: 10px 15px;
+    padding: 5px 8px;
     background-color: #f4f4f4;
     border-radius: 5px;
-    font-size: 18px;
+    font-size: 20px;
     white-space: nowrap;
     margin-left: 10px;
 }
-
+@media (max-width: 768px) {
+    nav ul li a {
+        font-size: 3vw;
+    }
+}
 #mySidenav {
     height: 100%;
     width: 0;

@@ -57,10 +57,6 @@ func HTTPRTCCamRoomHandler(w http.ResponseWriter, r *http.Request) {
 	RoomPageHandler(w, r, "rtccam_room.html")
 }
 
-func HTTPRTCCamRoomMobileHandler(w http.ResponseWriter, r *http.Request) {
-	RoomPageHandler(w, r, "rtccam_room_mobile.html")
-}
-
 func JavascriptHandler(w http.ResponseWriter, r *http.Request, jsFile string) {
 	t, _ := template.ParseFiles(BaseJsPath + "/" + jsFile)
 	webSocketUrl := make(map[string]string)
@@ -71,10 +67,6 @@ func JavascriptHandler(w http.ResponseWriter, r *http.Request, jsFile string) {
 		webSocketUrl["WebSocketURL"] = "ws://" + r.Host + "/rtccam"
 	}
 	t.Execute(w, webSocketUrl)
-}
-
-func RTCCAMJavascriptHandler(w http.ResponseWriter, r *http.Request) {
-	JavascriptHandler(w, r, "rtccam.js")
 }
 
 func RTCCAMDefaultJavascriptHandler(w http.ResponseWriter, r *http.Request) {

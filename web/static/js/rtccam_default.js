@@ -3,13 +3,15 @@ var rtcCamSocket = null;
 var rtcCamWSServerUrl = "{{.WebSocketURL}}";
 
 // WebRTC
+var joinRoomId = 0;
 var currentClientId = 0;
 var peerConnectionMap = new Map();
 var peerVideoStreamMap = new Map();
+var dataChannelMap = new Map();
 var iceServers = [];
 
 // Local 영상
-var localMediaStream = null;
+var localVideoStream = null;
 
 window.onload = function() {
     initRTCCamSocket();
@@ -17,11 +19,20 @@ window.onload = function() {
 
 // Android 에서 video 전체화면 재생 활성화
 function localVideoFullScreen() {
+    var titleNav = document.getElementById('titleNav');
+    titleNav.style.display= "none";
+
+    closeMenu();
+    clearVideoSection();
     localFullScreen(true);
 }
 
 // Android 에서 video 전체화면 재생 해제
 function localVideoExitFullScreen() {
+    var titleNav = document.getElementById('titleNav');
+    titleNav.style.display = "flex";
+
+    updateVideoElement();
     localFullScreen(false);
 }
 
@@ -51,7 +62,7 @@ function initRTCCamSocket() {
     }
 
     rtcCamSocket.onerror = function (event) {
-        alert("rtccam 서버와 통신할 수 없습니다.");
+        console.log("rtccam 서버와 통신할 수 없습니다.");
         rtcCamSocket = new WebSocket(rtcCamWSServerUrl);
     }
 
@@ -95,9 +106,11 @@ function handlerResultMessage(data) {
         showRoomList(data.rooms);
     } else if (data.result_message === "error") {
         alert(data.error_message);
+        moveHome();
     } else if (data.result_message === "join_success") {
         iceServers = data.ice_servers;
         currentClientId = data.client_id;
+        joinRoomId = data.room_info.id;
         startStreaming(data.room_info);
     } else if (data.result_message === "leave_client") {
         peerClose(data.client_id);
@@ -128,12 +141,6 @@ function handlerCandidateMessage(data) {
     console.log("candidate data peerConnection: " + peerConnection);
     console.log("candidate data candidate: " + data.candidate);
     peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-}
-
-function clearPeerMap() {
-    peerConnectionMap.clear();
-    peerVideoStreamMap.clear();
-    updateVideoElement();
 }
 
 function requestCreateRoom(roomTitle, isPassword, roomPassword) {
@@ -176,14 +183,6 @@ function requestRoomJoin(roomId, auth_token) {
     }));
 }
 
-async function requestRoomLeave(clientId) {
-    await rtcCamSocket.send(JSON.stringify({
-        room: {
-            request_type: 'leave_room',
-        }
-    }));
-}
-
 function requestOffer(clientId, offer) {
     rtcCamSocket.send(JSON.stringify({
         signaling: {
@@ -219,8 +218,15 @@ function requestCandidate(clientId, candidate) {
 
 function startStreaming(roomInfo) {
     navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
-        localMediaStream = stream;
-        updateVideoElement();
+        localVideoStream = stream;
+
+        var localFullScreenVideo = document.getElementById('localFullScreenVideo');
+        localFullScreenVideo.srcObject = stream;
+        localFullScreenVideo.style.width = "100vw";
+        localFullScreenVideo.style.height = "100vh";
+        localFullScreenVideo.onloadedmetadata = function (e) {
+            localFullScreenVideo.play();
+        }
 
         for (let clientId in roomInfo.clients) {
             if (parseInt(clientId) === currentClientId) {
@@ -230,15 +236,16 @@ function startStreaming(roomInfo) {
             let clientIdInt = parseInt(clientId);
             createPeerConnection(clientIdInt);
             let peerConnection = peerConnectionMap.get(clientIdInt);
-            peerConnection.createOffer().then(function(offer) {
+            peerConnection.createOffer().then(function (offer) {
                 peerConnection.setLocalDescription(offer);
                 requestOffer(clientIdInt, offer);
             });
         }
+        updateVideoElement();
 
     }).catch(error => {
         alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
-    })
+    });
 }
 
 function peerClose(clientId) {
@@ -248,12 +255,58 @@ function peerClose(clientId) {
     updateVideoElement();
 }
 
+function broadCastDataChannelMessage() {
+    var inputMessageElement = document.getElementById('inputMessage');
+
+    console.log("broadcast message");
+    dataChannelMap.forEach(function(dataChannel, clientId) {
+        console.log("send messsage");
+        dataChannel.send(JSON.stringify({
+            sender: createNickName(currentClientId),
+            message: inputMessageElement.value,
+        }));
+    });
+
+    var data = {
+        sender: "나",
+        message: inputMessageElement.value,
+    }
+    onChat(data);
+    inputMessageElement.value = '';
+}
+
+function onChat(data) {
+    var chatWindowElement = document.getElementById('chatWindow');
+    var chatMessageElement = document.createElement('p');
+    chatMessageElement.textContent = data.sender + ": " + data.message;
+    chatWindowElement.appendChild(chatMessageElement);
+    chatWindowElement.scrollTop = chatWindowElement.scrollHeight;
+}
+
+function createNickName(clientId) {
+    return "참여자 " + clientId;
+}
+
+function createDataChannel(clientId, peerConnection) {
+    // DataChannel 생성
+    var dataChannel = peerConnection.createDataChannel("chatDataChannel");
+    dataChannel.onopen = function() {
+        console.log("dataChannel opened");
+    }
+
+    dataChannel.onerror = function(error) {
+        console.error("dataChannel error: " + error);
+    }
+
+    dataChannelMap.set(clientId, dataChannel);
+}
+
 function createPeerConnection(clientId) {
     var peerConnection = new RTCPeerConnection({
         "iceServers": iceServers
     });
 
-    localMediaStream.getTracks().forEach(track => peerConnection.addTrack(track, localMediaStream));
+    localVideoStream.getTracks().forEach(track => peerConnection.addTrack(track, localVideoStream));
 
     peerConnection.onicecandidate = function(event) {
         if (event.candidate) {
@@ -276,6 +329,15 @@ function createPeerConnection(clientId) {
         peerVideoStreamMap.set(clientId, event.streams[0]);
     }
 
+    peerConnection.ondatachannel = function(event) {
+        console.log("ondatachannel");
+        const receiveChannel = event.channel;
+
+        receiveChannel.onmessage = function(event) {
+            var data = JSON.parse(event.data);
+            onChat(data);
+        }
+    }
     peerConnection.oniceconnectionstatechange = function(event) {
         if (['disconnected', 'failed', 'closed'].includes(peerConnection.iceConnectionState)) {
             peerClose(clientId);
@@ -286,9 +348,11 @@ function createPeerConnection(clientId) {
     }
 
     peerConnectionMap.set(clientId, peerConnection);
+
+    createDataChannel(clientId, peerConnection);
 }
 
-function createVideoElement(stream, className, videoName) {
+function createVideoElement(stream, className, clientId, isCurrentVideo) {
     var div = document.createElement('div');
     div.className = className;
 
@@ -297,19 +361,39 @@ function createVideoElement(stream, className, videoName) {
     video.srcObject = stream;
     video.autoplay = true;
     video.controls = false;
+    video.id = "localVideo";
+    video.muted = isCurrentVideo;
     video.width = "auto";
     video.height = "auto";
+
+    if (isCurrentVideo) {
+        video.onclick = function() {
+            video.requestPictureInPicture();
+        }
+    } else {
+        video.onclick = function() {
+            video.requestFullscreen();
+        }
+    }
 
     // 새로운 div 요소를 생성합니다.
     var divName = document.createElement('div');
     divName.className = "participant-name";
-    divName.textContent = videoName;
+    divName.textContent = isCurrentVideo ? "나" : createNickName(clientId);
 
     // div 요소에 video와 divName 요소를 추가합니다.
     div.appendChild(video);
     div.appendChild(divName);
 
     return div;
+}
+
+function clearVideoSection() {
+    var videoSection = document.getElementById('videoSection');
+
+    while (videoSection.firstChild) {
+        videoSection.removeChild(videoSection.firstChild);
+    }
 }
 
 function updateVideoElement() {
@@ -320,13 +404,12 @@ function updateVideoElement() {
     }
 
     // 로컬 비디오 표시
-    var localVideoDiv = createVideoElement(localMediaStream, "my-video-container main-participant", "나");
+    var localVideoDiv = createVideoElement(localVideoStream, "my-video-container main-participant", 0, true);
     videoSection.appendChild(localVideoDiv);
 
     // Peer 들의 비디오 표시
-    var loopCount = 0;
     peerConnectionMap.forEach(function(peerConnection, clientId) {
-        var video = createVideoElement(peerVideoStreamMap.get(clientId), "video-container peer-participant", "참여자 " + ++loopCount);
+        var video = createVideoElement(peerVideoStreamMap.get(clientId), "video-container peer-participant", clientId, false);
         videoSection.appendChild(video);
     });
 }
@@ -352,6 +435,11 @@ function showRoomList(roomList) {
         cell3.innerHTML = clientCount;
 
         row.onclick = function() {
+            if (joinRoomId === room.id) {
+                alert("이미 참여중인 방입니다.");
+                return;
+            }
+
             var password = "";
             if (room.is_password) {
                 password = prompt("비밀번호를 입력해주세요.");
@@ -372,12 +460,10 @@ function showRoomList(roomList) {
 //////////////////////////////////////// 왼쪽 메뉴 ////////////////////////////////////////
 function moveRoom(roomId, authToken) {
     var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-        //window.location.href = "/room_mobile?join_room=" + roomId.toString() + "&auth_token=" + authToken;
-        window.location.href = "/room?join_room=" + roomId.toString() + "&auth_token=" + authToken;
-    } else {
-        window.location.href = "/room?join_room=" + roomId.toString() + "&auth_token=" + authToken;
-    }
+    window.location.href = "/room?join_room=" + roomId.toString() + "&auth_token=" + authToken;
+}
+function moveHome() {
+    window.location.href = "/";
 }
 
 function openMenu() {
