@@ -483,7 +483,9 @@ function showRoomList(roomList) {
 
     }
 
-    initRoom = true;
+    if (joinRoomId !== 0) {
+        updateRoomInfo(roomList.rooms[joinRoomId]);
+    }
 }
 
 
