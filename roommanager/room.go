@@ -11,27 +11,29 @@ import (
 var nextRoomIdMutex sync.Mutex
 var nextRoomId int64 = 0
 
-func NewRoom(title, password string) *Room {
+func NewRoom(title, password string, maxClientCount int) *Room {
 	nextRoomIdMutex.Lock()
 	defer nextRoomIdMutex.Unlock()
 
 	nextRoomId++
 	return &Room{
-		Id:         nextRoomId,
-		Title:      title,
-		IsPassword: password != "",
-		Password:   password,
-		Clients:    make(map[int64]*rtccamclient.RTCCamClient),
-		AuthTokens: make(map[string]int),
+		Id:             nextRoomId,
+		Title:          title,
+		IsPassword:     password != "",
+		Password:       password,
+		MaxClientCount: maxClientCount,
+		Clients:        make(map[int64]*rtccamclient.RTCCamClient),
+		AuthTokens:     make(map[string]int),
 	}
 }
 
 type Room struct {
 	Id int64 `json:"id"`
 
-	Title      string `json:"title"`
-	IsPassword bool   `json:"is_password"`
-	Password   string `json:"-"`
+	Title          string `json:"title"`
+	IsPassword     bool   `json:"is_password"`
+	Password       string `json:"-"`
+	MaxClientCount int    `json:"max_client_count"`
 
 	clientsMutex sync.Mutex
 	Clients      map[int64]*rtccamclient.RTCCamClient `json:"clients"`
@@ -120,4 +122,11 @@ func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, error) {
 		return nil, rtccamerrors.ErrorClientNotFound
 	}
 	return client, nil
+}
+
+func (r *Room) GetClientCount() int {
+	r.clientsMutex.Lock()
+	defer r.clientsMutex.Unlock()
+
+	return len(r.Clients)
 }

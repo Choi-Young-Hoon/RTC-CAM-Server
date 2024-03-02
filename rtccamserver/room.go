@@ -106,6 +106,12 @@ func roomAuthTokenHandler(client *rtccamclient.RTCCamClient, roomRequestMessage 
 		return
 	}
 
+	if room.MaxClientCount <= room.GetClientCount() {
+		log.Println("[roomAuthTokenHandler] ClientId:", client.ClientId, "Error: Room Full")
+		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorRoomIsFull.Error()))
+		return
+	}
+
 	if room.IsPassword && room.Password != roomRequestMessage.Password {
 		log.Println("[roomAuthTokenHandler] ClientId:", client.ClientId, "Error: Invalid Password")
 		client.Send(rtccammessage.NewRTCCamErrorMessage("Invalid Password"))

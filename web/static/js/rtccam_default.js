@@ -111,6 +111,7 @@ function handlerResultMessage(data) {
     if (data.result_message === "success") {
         showRoomList(data.rooms);
     } else if (data.result_message === "error") {
+        alert(data.error_message);
         moveHome();
     } else if (data.result_message === "join_success") {
         iceServers = data.ice_servers;
@@ -149,11 +150,12 @@ function handlerCandidateMessage(data) {
     peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
 }
 
-function requestCreateRoom(roomTitle, isPassword, roomPassword) {
+function requestCreateRoom(roomTitle, isPassword, roomPassword, maxClientCount) {
     rtcCamSocket.send(JSON.stringify({
         create_room: {
             title: roomTitle,
             password: isPassword ? roomPassword : '',
+            max_client_count: parseInt(maxClientCount),
         },
     }));
 }
@@ -440,7 +442,7 @@ function updateRoomInfo(room) {
 
     roomNumber.textContent = "방번호: " + room.id;
     roomTitle.textContent = "방제목: " + room.title;
-    roomParticipants.textContent = "인원수: " + Object.keys(room.clients).length;
+    roomParticipants.textContent = "인원수: " + Object.keys(room.clients).length + "/" + room.max_client_count;
     roomIsPassword.textContent = "암호여부: " + (room.is_password ? "O" : "X");
 }
 
@@ -465,7 +467,7 @@ function showRoomList(roomList) {
         cell1.innerHTML = room.id;
         cell2.innerHTML = room.title;
 
-        let clientCount = Object.keys(room.clients).length;
+        let clientCount = Object.keys(room.clients).length + "/" + room.max_client_count;
         cell3.innerHTML = clientCount;
 
         row.onclick = function() {
@@ -518,9 +520,15 @@ function closeMenu() {
 
 
 //////////////////////////////////////// 방 생성 모달 ////////////////////////////////////////
-var createRoomModal = document.getElementById('createRoomModal');
 
+var createRoomModal = document.getElementById('createRoomModal');
 function showCreateRoomModal() {
+    document.getElementById('roomTitle').value = '';
+    document.getElementById('usePassword').checked = false;
+    document.getElementById('roomPassword').value = '';
+    document.getElementById('maxParticipants').value = '4';
+
+
     createRoomModal.style.display = "block";
 }
 
@@ -544,13 +552,14 @@ function createRoom() {
     var roomTitle = document.getElementById('roomTitle').value;
     var isPassword = document.getElementById('usePassword').checked;
     var roomPassword = document.getElementById('roomPassword').value;
+    var maxParticipant = document.getElementById('maxParticipants').value;
 
     if (roomTitle === "") {
         alert("방 제목을 입력해주세요.");
         return;
     }
 
-    requestCreateRoom(roomTitle, isPassword, roomPassword);
+    requestCreateRoom(roomTitle, isPassword, roomPassword, maxParticipant);
     hideCreateRoomModal();
 }
 
@@ -568,3 +577,15 @@ document.getElementById('inputMessage').addEventListener('keydown', function(eve
         }
     }
 });
+
+function onMaxParticipantsInput() {
+    var myParticipants = document.getElementById('maxParticipants');
+    var value = parseInt(myParticipants.value);
+    var max = parseInt(myParticipants.max);
+    var min = parseInt(myParticipants.min);
+    if (value > max) {
+        myParticipants.value = max;
+    } else if (min > value) {
+        myParticipants.value = min;
+    }
+}
