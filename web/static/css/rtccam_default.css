@@ -63,6 +63,7 @@ nav ul li a {
         font-size: 3vw;
     }
 }
+
 #mySidenav {
     height: 100%;
     width: 0;
@@ -94,8 +95,12 @@ nav ul li a {
 }
 
 #mySidenav tr:hover {
-    background-color: #f1f1f1;
+    background-color: #818181;
     color: #111;
+}
+
+#mySidenav th {
+    color: white;
 }
 
 #mySidenav tr {
@@ -104,6 +109,11 @@ nav ul li a {
 
 #mySidenav td {
     white-space: nowrap;
+    color: white;
+}
+
+.white-font {
+    color: white;
 }
 
 .blue-background {

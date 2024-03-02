@@ -497,7 +497,6 @@ function showRoomList(roomList) {
 
 //////////////////////////////////////// 왼쪽 메뉴 ////////////////////////////////////////
 function moveRoom(roomId, authToken) {
-    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     window.location.href = "/room?join_room=" + roomId.toString() + "&auth_token=" + authToken;
 }
 function moveHome() {
@@ -508,7 +507,13 @@ function openMenu() {
     if (document.getElementById('mySidenav').style.width !== "0px") {
         closeMenu();
     } else {
-        document.getElementById("mySidenav").style.width = "35vw";
+
+        var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            document.getElementById("mySidenav").style.width = "100%";
+        } else {
+            document.getElementById("mySidenav").style.width = "35vw";
+        }
         document.getElementById("rtccamOverlay").style.width = "100%";
     }
 }
