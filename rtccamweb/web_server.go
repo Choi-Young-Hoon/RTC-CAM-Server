@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"rtccam/rtccamclient"
 	"rtccam/rtccamserver"
 )
 
@@ -44,6 +45,9 @@ func StartHTTPServer(servicePort string) {
 }
 
 func StopServer() {
+	clientManager := rtccamclient.GetRTCCamClientManager()
+	clientManager.CloseAll()
+
 	if err := httpServer.Shutdown(context.TODO()); err != nil {
 		panic(err)
 	}

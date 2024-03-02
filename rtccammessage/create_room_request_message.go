@@ -1,4 +1,4 @@
-package message
+package rtccammessage
 
 type CreateRoomRequestMessage struct {
 	// 방 생성

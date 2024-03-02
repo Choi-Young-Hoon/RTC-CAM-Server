@@ -1,4 +1,4 @@
-package message
+package rtccammessage
 
 func NewRTCCamSuccessMessage() *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{

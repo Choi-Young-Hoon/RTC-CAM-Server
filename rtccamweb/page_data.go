@@ -13,4 +13,6 @@ type PageData struct {
 	RequestId       string
 
 	AuthToken string
+
+	ImageServerUrl string
 }

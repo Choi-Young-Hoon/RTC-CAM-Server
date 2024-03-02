@@ -265,7 +265,7 @@ function peerClose(clientId) {
 function broadCastDataChannelMessage() {
     var inputMessageElement = document.getElementById('inputMessage');
 
-    console.log("broadcast message");
+    console.log("broadcast rtccammessage");
     dataChannelMap.forEach(function(dataChannel, clientId) {
         console.log("send messsage");
         dataChannel.send(JSON.stringify({
@@ -275,7 +275,7 @@ function broadCastDataChannelMessage() {
     });
 
     var data = {
-        sender: "나 (참여자 " + currentClientId + ")",
+        sender: "나 (익명 " + currentClientId + ")",
         message: inputMessageElement.value,
     }
     onChat(data, true);
@@ -302,7 +302,7 @@ function onChat(data, isSender) {
 }
 
 function createNickName(clientId) {
-    return "참여자 " + clientId;
+    return "익명 " + clientId;
 }
 
 function createDataChannel(clientId, peerConnection) {

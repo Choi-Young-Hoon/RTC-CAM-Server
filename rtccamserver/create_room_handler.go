@@ -1,23 +1,19 @@
 package rtccamserver
 
 import (
-	"log"
-	"rtccam/message"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
+	"rtccam/rtccammessage"
 )
 
-func CreateRoomHandler(client *rtccamclient.RTCCamClient, createRoomRequestMessage *message.CreateRoomRequestMessage) {
+func CreateRoomHandler(client *rtccamclient.RTCCamClient, createRoomRequestMessage *rtccammessage.CreateRoomRequestMessage) {
 	roomManager := roommanager.GetRoomManager()
 	room := roommanager.NewRoom(createRoomRequestMessage.Title, createRoomRequestMessage.Password)
 	authToken := room.GenerateAuthToken()
 	roomManager.AddRoom(room)
 
-	roomListMessage := message.NewRTCCamRoomListMessage(roomManager)
+	roomListMessage := rtccammessage.NewRTCCamRoomListMessage(roomManager)
 	rtccamclient.GetRTCCamClientManager().Broadcast(roomListMessage)
 
-	err := client.Send(message.NewCreateRoomMessage(room.Id, authToken))
-	if err != nil {
-		log.Println("[CreateRoomHandler] ClientId:", client.ClientId, "Error:", err)
-	}
+	client.Send(rtccammessage.NewCreateRoomMessage(room.Id, authToken))
 }

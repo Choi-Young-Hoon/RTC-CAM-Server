@@ -1,39 +1,45 @@
 package rtccamclient
 
 import (
+	"context"
 	"github.com/gorilla/websocket"
-	"math"
-	"rtccam/message"
+	"log"
+	"rtccam/rtccammessage"
 	"sync"
 )
 
-var nextClientIdMutex sync.Mutex
-var nextClientId int64 = 0
-
 func NewRTCCamClient(ws *websocket.Conn) *RTCCamClient {
-	return &RTCCamClient{
-		ClientId: nextClientId,
-		ws:       ws,
+	client := &RTCCamClient{
+		ws: ws,
 	}
+
+	client.ctx, client.cancel = context.WithCancel(context.Background())
+	client.channel = make(chan interface{})
+	client.wg.Add(1)
+	go client.sender()
+
+	return client
 }
 
 type RTCCamClient struct {
 	ClientId   int64 `json:"client_id"`
 	JoinRoomId int64 `json:"-"`
-	ws         *websocket.Conn
+
+	wg      sync.WaitGroup
+	ctx     context.Context
+	cancel  context.CancelFunc
+	channel chan interface{}
+	ws      *websocket.Conn
 }
 
 var sendMutex sync.Mutex
 
-func (c *RTCCamClient) Send(message interface{}) error {
-	sendMutex.Lock()
-	defer sendMutex.Unlock()
-
-	return c.ws.WriteJSON(message)
+func (c *RTCCamClient) Send(message interface{}) {
+	c.channel <- message
 }
 
-func (c *RTCCamClient) Recv() (*message.RTCCamRequestMessage, error) {
-	rtcCamRequestMessage := message.NewRTCCamRequestMessage()
+func (c *RTCCamClient) Recv() (*rtccammessage.RTCCamRequestMessage, error) {
+	rtcCamRequestMessage := rtccammessage.NewRTCCamRequestMessage()
 	err := c.ws.ReadJSON(rtcCamRequestMessage)
 	if err != nil {
 		return nil, err
@@ -43,19 +49,24 @@ func (c *RTCCamClient) Recv() (*message.RTCCamRequestMessage, error) {
 }
 
 func (c *RTCCamClient) Close() {
-	c.ws.Close()
+	c.cancel()
+	c.wg.Wait()
+	_ = c.ws.Close()
 }
 
-func (c *RTCCamClient) GenerateClientId() int64 {
-	nextClientIdMutex.Lock()
-	defer nextClientIdMutex.Unlock()
+func (c *RTCCamClient) sender() {
+	defer c.wg.Done()
 
-	if nextClientId == math.MaxInt64 {
-		nextClientId = 0
+	for {
+		select {
+		case <-c.ctx.Done():
+			return
+		case message := <-c.channel:
+			err := c.ws.WriteJSON(message)
+			if err != nil {
+				log.Println("[RTCCamClient.sender] ClientId:", c.ClientId, "Send Error:", err)
+				continue
+			}
+		}
 	}
-
-	nextClientId++
-	c.ClientId = nextClientId
-
-	return c.ClientId
 }

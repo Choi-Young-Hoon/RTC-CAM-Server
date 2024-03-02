@@ -1,4 +1,4 @@
-package message
+package rtccammessage
 
 func NewRTCCamRequestMessage() *RTCCamRequestMessage {
 	return &RTCCamRequestMessage{}

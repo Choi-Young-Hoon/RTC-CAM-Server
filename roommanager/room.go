@@ -2,9 +2,9 @@ package roommanager
 
 import (
 	"math/rand"
-	"rtccam/message"
 	"rtccam/rtccamclient"
 	"rtccam/rtccamerrors"
+	"rtccam/rtccammessage"
 	"sync"
 )
 
@@ -36,7 +36,8 @@ type Room struct {
 	clientsMutex sync.Mutex
 	Clients      map[int64]*rtccamclient.RTCCamClient `json:"clients"`
 
-	AuthTokens map[string]int `json:"-"`
+	deleteAuthTokenMutex sync.Mutex
+	AuthTokens           map[string]int `json:"-"`
 }
 
 func (r *Room) GenerateAuthToken() string {
@@ -58,11 +59,17 @@ func (r *Room) Authenticate(authToken string) bool {
 	if ok && value > 0 {
 		r.AuthTokens[authToken]--
 		if r.AuthTokens[authToken] <= 0 {
-			delete(r.AuthTokens, authToken)
+			r.deleteAuthToken(authToken)
 		}
 		return true
 	}
 	return false
+}
+
+func (r *Room) deleteAuthToken(authToken string) {
+	r.deleteAuthTokenMutex.Lock()
+	defer r.deleteAuthTokenMutex.Unlock()
+	delete(r.AuthTokens, authToken)
 }
 
 func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) error {
@@ -73,11 +80,8 @@ func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) error {
 
 	r.Clients[client.ClientId] = client
 
-	joinSuccessMessage := message.NewRTCCamJoinSuccessMessage(r, client.ClientId)
-	err := client.Send(joinSuccessMessage)
-	if err != nil {
-		return err
-	}
+	joinSuccessMessage := rtccammessage.NewRTCCamJoinSuccessMessage(r, client.ClientId)
+	client.Send(joinSuccessMessage)
 
 	return nil
 }
@@ -99,12 +103,9 @@ func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) error {
 		roomManager.RemoveRoom(r)
 	}
 
-	leaveMessage := message.NewRTCCamLeaveMessage(client.ClientId)
+	leaveMessage := rtccammessage.NewRTCCamLeaveMessage(client.ClientId)
 	for _, client := range r.Clients {
-		err := client.Send(leaveMessage)
-		if err != nil {
-			return err
-		}
+		client.Send(leaveMessage)
 	}
 
 	return nil

@@ -2,18 +2,18 @@ package rtccamserver
 
 import (
 	"log"
-	"rtccam/message"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
+	"rtccam/rtccammessage"
 )
 
-func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMessage *message.SignalingMessage) {
+func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMessage *rtccammessage.SignalingMessage) {
 	log.Println("[SignalingRouteHander] ClientId:", client.ClientId, "RequestType:", signalingRequestMessage.RequestType)
 
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
-		errorMessage := message.NewRTCCamErrorMessage(err.Error())
+		errorMessage := rtccammessage.NewRTCCamErrorMessage(err.Error())
 		log.Println("[SignalingRouteHander] GetRoom Failed ClientId:", client.ClientId, "RoomId:", client.JoinRoomId, "Error:", err)
 		client.Send(errorMessage)
 		return
@@ -22,7 +22,7 @@ func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMes
 	responseClient, err := room.GetClient(signalingRequestMessage.ResponseClientId)
 	if err != nil {
 		log.Println("[SignalingRouteHander] GetClient Failed ClientId:", client.ClientId, "ResponseClientId:", signalingRequestMessage.ResponseClientId, "Error:", err)
-		errorMessage := message.NewRTCCamErrorMessage(err.Error())
+		errorMessage := rtccammessage.NewRTCCamErrorMessage(err.Error())
 		client.Send(errorMessage)
 		return
 	}
@@ -30,15 +30,15 @@ func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMes
 	responseClient.Send(signalingRequestMessage)
 }
 
-func SignalingHandler(client *rtccamclient.RTCCamClient, signalingRequestMessage *message.SignalingMessage) {
+func SignalingHandler(client *rtccamclient.RTCCamClient, signalingRequestMessage *rtccammessage.SignalingMessage) {
 	switch signalingRequestMessage.RequestType {
-	case message.SignalingRequestTypeOffer:
+	case rtccammessage.SignalingRequestTypeOffer:
 		SignalingRouteHander(client, signalingRequestMessage)
 		break
-	case message.SignalingRequestTypeAnswer:
+	case rtccammessage.SignalingRequestTypeAnswer:
 		SignalingRouteHander(client, signalingRequestMessage)
 		break
-	case message.SignalingRequestTypeCandidate:
+	case rtccammessage.SignalingRequestTypeCandidate:
 		SignalingRouteHander(client, signalingRequestMessage)
 		break
 	}

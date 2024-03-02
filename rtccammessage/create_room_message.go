@@ -1,4 +1,4 @@
-package message
+package rtccammessage
 
 func NewCreateRoomMessage(id int64, authToken string) *CreateRoomMessage {
 	return &CreateRoomMessage{

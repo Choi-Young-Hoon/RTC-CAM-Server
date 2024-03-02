@@ -1,4 +1,4 @@
-package message
+package rtccammessage
 
 var RoomRequestTypeJoinRoom = "join_room"
 var RoomRequestTypeLeaveRoom = "leave_room"

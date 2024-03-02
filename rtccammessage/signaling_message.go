@@ -1,4 +1,4 @@
-package message
+package rtccammessage
 
 import "github.com/pion/webrtc/v3"
 

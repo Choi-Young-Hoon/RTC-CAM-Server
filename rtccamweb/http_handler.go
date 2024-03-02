@@ -24,6 +24,8 @@ func HTTPRTCCamHomeHandler(w http.ResponseWriter, r *http.Request) {
 	t := CreateTemplate()
 
 	pageData := NewPageData("Home")
+	pageData.ImageServerUrl = getImageServerUrl(r)
+
 	err := t.ExecuteTemplate(w, "rtccam_home.html", pageData)
 	if err != nil {
 		log.Println("[HTTPRTCCamHomeHandler] Template Execute Error:", err)
@@ -59,14 +61,36 @@ func HTTPRTCCamRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 func JavascriptHandler(w http.ResponseWriter, r *http.Request, jsFile string) {
 	t, _ := template.ParseFiles(BaseJsPath + "/" + jsFile)
-	webSocketUrl := make(map[string]string)
 
-	if HTTPProtocol == "https" {
-		webSocketUrl["WebSocketURL"] = "wss://" + r.Host + "/rtccam"
-	} else {
-		webSocketUrl["WebSocketURL"] = "ws://" + r.Host + "/rtccam"
+	jsUrls := make(map[string]string)
+	jsUrls["WebSocketURL"] = getWebSocketUrl(r)
+
+	err := t.Execute(w, jsUrls)
+	if err != nil {
+		log.Println("[JavascriptHandler] Template Execute Error:", err)
 	}
-	t.Execute(w, webSocketUrl)
+}
+
+func getWebSocketUrl(r *http.Request) string {
+	websocketUrl := ""
+	if HTTPProtocol == "https" {
+		websocketUrl = "wss://" + r.Host + "/rtccam"
+	} else {
+		websocketUrl = "ws://" + r.Host + "/rtccam"
+	}
+
+	return websocketUrl
+}
+
+func getImageServerUrl(r *http.Request) string {
+	imageServerUrl := ""
+	if HTTPProtocol == "https" {
+		imageServerUrl = "https://" + r.Host + "/img"
+	} else {
+		imageServerUrl = "http://" + r.Host + "/img"
+	}
+
+	return imageServerUrl
 }
 
 func RTCCAMDefaultJavascriptHandler(w http.ResponseWriter, r *http.Request) {
