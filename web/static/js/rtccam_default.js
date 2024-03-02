@@ -441,7 +441,7 @@ function updateRoomInfo(room) {
     roomNumber.textContent = "방번호: " + room.id;
     roomTitle.textContent = "방제목: " + room.title;
     roomParticipants.textContent = "인원수: " + Object.keys(room.clients).length;
-    roomIsPassword.textContent = "암호여부: " + (room.is_password ? "있음" : "없음");
+    roomIsPassword.textContent = "암호여부: " + (room.is_password ? "O" : "X");
 }
 
 function showRoomList(roomList) {
