@@ -10,6 +10,7 @@ import (
 	"rtccam/rtccamlog"
 	"rtccam/rtccamweb"
 	"syscall"
+	"time"
 )
 
 func info(httpProtocol, servicePort, certPem, privKeyPem string) {
@@ -41,8 +42,8 @@ func startServer(httpProtocol, servicePort, certPem, privKeyPem string) {
 }
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixNano
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339Nano})
 
 	httpProtocol := flag.String("protocol", "http", "http 프로토콜(http, https)")
 	servicePort := flag.String("p", "40001", "포트번호")
