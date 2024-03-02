@@ -61,19 +61,18 @@
         <a class="modalClose" onclick="hideCreateRoomModal()">&times;</a>
         <h2>방 만들기</h2>
         <label for="roomTitle">방 제목:</label>
-        <input type="text" id="roomTitle" required><br><br>
+        <input type="text" id="roomTitle" required><br>
 
         <label for="maxParticipants">최대 참가자 수: (최대 10)</label>
-        <input type="number" id="maxParticipants" min="1" max="10" oninput="onMaxParticipantsInput()" required><br><br>
+        <input type="number" id="maxParticipants" min="1" max="10" oninput="onMaxParticipantsInput()" required><br>
 
         <label for="usePassword">패스워드 사용:</label>
         <input type="checkbox" id="usePassword"><br><br>
 
         <div id="passwordField" class="hidden">
             <label for="roomPassword">암호:</label>
-            <input type="password" id="roomPassword" disabled><br><br>
+            <input type="password" id="roomPassword" disabled><br>
         </div>
-
 
         <button onclick="createRoom()">방 생성</button>
     </div>
