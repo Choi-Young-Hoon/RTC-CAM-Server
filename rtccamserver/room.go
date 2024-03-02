@@ -81,7 +81,7 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtcc
 
 	if room.Authenticate(roomRequestMessage.AuthToken) == false {
 		log.Println("[roomJoinHandler] ClientId:", client.ClientId, "Error: Invalid AuthToken")
-		client.Send(rtccammessage.NewRTCCamErrorMessage("Invalid AuthToken"))
+		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorInvalidAuthToken.Error()))
 		return
 	}
 
