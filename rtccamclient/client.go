@@ -3,7 +3,8 @@ package rtccamclient
 import (
 	"context"
 	"github.com/gorilla/websocket"
-	"log"
+	"rtccam/rtccamlog"
+
 	"rtccam/rtccammessage"
 	"sync"
 )
@@ -64,7 +65,7 @@ func (c *RTCCamClient) sender() {
 		case message := <-c.channel:
 			err := c.ws.WriteJSON(message)
 			if err != nil {
-				log.Println("[RTCCamClient.sender] ClientId:", c.ClientId, "Send Error:", err)
+				rtccamlog.Error().Err(err).Any("ClientId", c.ClientId).Send()
 				continue
 			}
 		}

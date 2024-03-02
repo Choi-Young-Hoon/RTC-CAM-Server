@@ -2,8 +2,8 @@ package rtccamweb
 
 import (
 	"html/template"
-	"log"
 	"net/http"
+	"rtccam/rtccamlog"
 )
 
 const BasePath = "web/static"
@@ -28,13 +28,11 @@ func HTTPRTCCamHomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := t.ExecuteTemplate(w, "rtccam_home.html", pageData)
 	if err != nil {
-		log.Println("[HTTPRTCCamHomeHandler] Template Execute Error:", err)
+		rtccamlog.Error().Err(err).Send()
 	}
 }
 
 func RoomPageHandler(w http.ResponseWriter, r *http.Request, htmlFile string) {
-	log.Println("[RoomPageHandler] Start")
-
 	t := CreateTemplate()
 	pageData := NewPageData("Room")
 	joinRoom := r.URL.Query().Get("join_room")
@@ -51,7 +49,7 @@ func RoomPageHandler(w http.ResponseWriter, r *http.Request, htmlFile string) {
 
 	err := t.ExecuteTemplate(w, htmlFile, pageData)
 	if err != nil {
-		log.Println("[HTTPRTCCamRoomHandler] Template Execute Error:", err)
+		rtccamlog.Error().Err(err).Send()
 	}
 }
 
@@ -67,7 +65,7 @@ func JavascriptHandler(w http.ResponseWriter, r *http.Request, jsFile string) {
 
 	err := t.Execute(w, jsUrls)
 	if err != nil {
-		log.Println("[JavascriptHandler] Template Execute Error:", err)
+		rtccamlog.Error().Err(err).Send()
 	}
 }
 

@@ -1,10 +1,10 @@
 package rtccamserver
 
 import (
-	"log"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
 	"rtccam/rtccamerrors"
+	"rtccam/rtccamlog"
 	"rtccam/rtccammessage"
 )
 
@@ -38,11 +38,18 @@ func (r *RoomMessageDispatcher) AddHandleHandler(requestType string, handle Room
 }
 
 func (r *RoomMessageDispatcher) RoomHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtccammessage.RoomRequestMessage) {
-	log.Println("[RoomHandler] ClientId:", client.ClientId, "RequestType:", roomRequestMessage.RequestType)
+	rtccamlog.Info().
+		Any("ClientId", client.ClientId).
+		Str("RequestType", roomRequestMessage.RequestType).
+		Send()
 
 	handle, ok := r.handles[roomRequestMessage.RequestType]
 	if !ok {
-		log.Println("[RoomHandler] ClientId:", client.ClientId, "Error: Not Found RequestType:", roomRequestMessage.RequestType)
+		rtccamlog.Error().
+			Err(rtccamerrors.ErrorRequestTypeError).
+			Any("ClientId", client.ClientId).
+			Str("RequestType", roomRequestMessage.RequestType).
+			Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorRequestTypeError.Error()))
 		return
 	}
@@ -74,18 +81,18 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtcc
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(roomRequestMessage.RoomId)
 	if err != nil {
-		log.Println("[roomJoinHandler] ClientId:", client.ClientId, "Error:", err)
+		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
 		return
 	}
 
 	if room.Authenticate(roomRequestMessage.AuthToken) == false {
-		log.Println("[roomJoinHandler] ClientId:", client.ClientId, "Error: Invalid AuthToken")
+		rtccamlog.Error().Err(rtccamerrors.ErrorInvalidAuthToken).Any("ClientId", client.ClientId).Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorInvalidAuthToken.Error()))
 		return
 	}
 
-	log.Println("[roomJoinHandler] ClientId:", client.ClientId, "RoomId:", room.Id)
+	rtccamlog.Info().Any("ClientId", client.ClientId).Int64("Join RoomId", room.Id).Send()
 	room.JoinClient(client)
 	broadcastRoomList()
 }
@@ -96,25 +103,28 @@ func roomLeaveHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtc
 }
 
 func roomAuthTokenHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtccammessage.RoomRequestMessage) {
-	log.Println("[roomAuthTokenHandler] ClientId:", client.ClientId, "JoinRoomId:", roomRequestMessage.RoomId)
+	rtccamlog.Info().
+		Any("ClientId", client.ClientId).
+		Int64("JoinRoomId", roomRequestMessage.RoomId).
+		Send()
 
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(roomRequestMessage.RoomId)
 	if err != nil {
-		log.Println("[roomAuthTokenHandler] ClientId:", client.ClientId, "Error:", err)
+		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
 		return
 	}
 
 	if room.MaxClientCount <= room.GetClientCount() {
-		log.Println("[roomAuthTokenHandler] ClientId:", client.ClientId, "Error: Room Full")
+		rtccamlog.Error().Err(rtccamerrors.ErrorRoomIsFull).Any("ClientId", client.ClientId).Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorRoomIsFull.Error()))
 		return
 	}
 
 	if room.IsPassword && room.Password != roomRequestMessage.Password {
-		log.Println("[roomAuthTokenHandler] ClientId:", client.ClientId, "Error: Invalid Password")
-		client.Send(rtccammessage.NewRTCCamErrorMessage("Invalid Password"))
+		rtccamlog.Error().Err(rtccamerrors.ErrorInvalidPassword).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorInvalidPassword.Error()))
 		return
 	}
 
@@ -126,15 +136,16 @@ func roomLeave(client *rtccamclient.RTCCamClient) {
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
+		// 접속한 방이 없으면.
 		if client.JoinRoomId == 0 {
 			return
 		}
 
-		log.Println("[roomLeaveHandler] ClientId:", client.ClientId, "Error:", err)
+		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
 		return
 	}
 
-	log.Println("[roomLeaveHandler] ClientId:", client.ClientId, "LeaveRoomId:", room.Id)
+	rtccamlog.Info().Any("ClientId", client.ClientId).Int64("LeaveRoomId", room.Id).Send()
 	room.LeaveClient(client)
 }

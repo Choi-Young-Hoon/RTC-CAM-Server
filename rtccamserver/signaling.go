@@ -1,27 +1,38 @@
 package rtccamserver
 
 import (
-	"log"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
+	"rtccam/rtccamlog"
 	"rtccam/rtccammessage"
 )
 
 func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMessage *rtccammessage.SignalingMessage) {
-	log.Println("[SignalingRouteHander] ClientId:", client.ClientId, "RequestType:", signalingRequestMessage.RequestType)
+	rtccamlog.Info().
+		Any("ClientId", client.ClientId).
+		Str("RequestType", signalingRequestMessage.RequestType).
+		Send()
 
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
 		errorMessage := rtccammessage.NewRTCCamErrorMessage(err.Error())
-		log.Println("[SignalingRouteHander] GetRoom Failed ClientId:", client.ClientId, "RoomId:", client.JoinRoomId, "Error:", err)
+		rtccamlog.Error().
+			Err(err).
+			Any("ClientId", client.ClientId).
+			Int64("RoomId", client.JoinRoomId).
+			Send()
 		client.Send(errorMessage)
 		return
 	}
 
 	responseClient, err := room.GetClient(signalingRequestMessage.ResponseClientId)
 	if err != nil {
-		log.Println("[SignalingRouteHander] GetClient Failed ClientId:", client.ClientId, "ResponseClientId:", signalingRequestMessage.ResponseClientId, "Error:", err)
+		rtccamlog.Error().
+			Err(err).
+			Any("ClientId", client.ClientId).
+			Any("ResponseClientId", signalingRequestMessage.ResponseClientId).
+			Send()
 		errorMessage := rtccammessage.NewRTCCamErrorMessage(err.Error())
 		client.Send(errorMessage)
 		return

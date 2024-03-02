@@ -2,7 +2,8 @@ package rtccamserver
 
 import (
 	"github.com/gorilla/websocket"
-	"log"
+	"rtccam/rtccamlog"
+
 	"net/http"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
@@ -44,6 +45,6 @@ func RTCCamWSHandler(w http.ResponseWriter, r *http.Request) {
 	defer RTCCamWSCientClose(client)
 	clientManager.AddClient(client)
 
-	log.Println("Client Connect Client Addr:", r.RemoteAddr)
+	rtccamlog.Info().Str("Client connected ip", r.RemoteAddr).Send()
 	RTCCamServerRun(client)
 }

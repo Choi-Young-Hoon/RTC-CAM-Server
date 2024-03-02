@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
+	"rtccam/rtccamlog"
 	"rtccam/rtccamweb"
 	"syscall"
 )
@@ -33,12 +35,15 @@ func startServer(httpProtocol, servicePort, certPem, privKeyPem string) {
 		rtccamweb.StartHTTPSServer(servicePort, certPem, privKeyPem)
 		break
 	default:
-		log.Println("Invalid http protocol: " + httpProtocol)
+		rtccamlog.Error().Msg("Invalid http protocol: " + httpProtocol)
 	}
 
 }
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
 	httpProtocol := flag.String("protocol", "http", "http 프로토콜(http, https)")
 	servicePort := flag.String("p", "40001", "포트번호")
 	certPem := flag.String("c", "cert.pem", "인증서 파일")

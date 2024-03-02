@@ -1,8 +1,8 @@
 package rtccamserver
 
 import (
-	"log"
 	"rtccam/rtccamclient"
+	"rtccam/rtccamlog"
 )
 
 func RTCCamServerRun(client *rtccamclient.RTCCamClient) {
@@ -11,7 +11,7 @@ func RTCCamServerRun(client *rtccamclient.RTCCamClient) {
 	for {
 		message, err := client.Recv()
 		if err != nil {
-			log.Println("[RTCCamServer] ClientId:", client.ClientId, "Recv Error:", err)
+			rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
 			return
 		}
 
