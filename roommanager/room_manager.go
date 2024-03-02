@@ -2,11 +2,13 @@ package roommanager
 
 import (
 	"rtccam/rtccamerrors"
+	"rtccam/rtccamgen"
 	"sync"
 )
 
 var defaultRoomManager = &RoomManager{
-	Rooms: make(map[int64]*Room),
+	idGenerator: rtccamgen.NewIDGenerator(),
+	Rooms:       make(map[int64]*Room),
 }
 
 func GetRoomManager() *RoomManager {
@@ -14,15 +16,22 @@ func GetRoomManager() *RoomManager {
 }
 
 type RoomManager struct {
+	idGenerator rtccamgen.Generator
+
 	roomsMutex sync.Mutex
 	Rooms      map[int64]*Room `json:"rooms"`
 }
 
-func (rm *RoomManager) AddRoom(room *Room) {
+func (rm *RoomManager) CreatRoom(title, password string, maxClientCount int) *Room {
 	rm.roomsMutex.Lock()
 	defer rm.roomsMutex.Unlock()
 
+	room := NewRoom(title, password, maxClientCount)
+	room.Id = rm.idGenerator.GenerateID()
+
 	rm.Rooms[room.Id] = room
+
+	return room
 }
 
 func (rm *RoomManager) RemoveRoom(room *Room) {
@@ -34,6 +43,8 @@ func (rm *RoomManager) RemoveRoom(room *Room) {
 		return
 	}
 	delete(rm.Rooms, room.Id)
+
+	rm.idGenerator.ReturnID(room.Id)
 }
 
 func (rm *RoomManager) GetRoom(roomId int64) (*Room, error) {
@@ -44,5 +55,6 @@ func (rm *RoomManager) GetRoom(roomId int64) (*Room, error) {
 	if !ok {
 		return nil, rtccamerrors.ErrorRoomNotFound
 	}
+
 	return room, nil
 }

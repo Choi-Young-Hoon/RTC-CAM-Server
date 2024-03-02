@@ -111,7 +111,7 @@ function handlerResultMessage(data) {
     if (data.result_message === "success") {
         showRoomList(data.rooms);
     } else if (data.result_message === "error") {
-        alert(data.error_message);
+        //alert(data.error_message);
         moveHome();
     } else if (data.result_message === "join_success") {
         iceServers = data.ice_servers;

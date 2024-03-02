@@ -1,13 +1,14 @@
 package rtccamclient
 
 import (
-	"math"
+	"github.com/gorilla/websocket"
+	"rtccam/rtccamgen"
 	"sync"
-	"sync/atomic"
 )
 
 var defaultRTCCamClientManager = &RTCCamClientManager{
-	clients: make(map[int64]*RTCCamClient),
+	clients:     make(map[int64]*RTCCamClient),
+	idGenerator: rtccamgen.NewIDGenerator(),
 }
 
 func GetRTCCamClientManager() *RTCCamClientManager {
@@ -15,21 +16,31 @@ func GetRTCCamClientManager() *RTCCamClientManager {
 }
 
 type RTCCamClientManager struct {
+	idGenerator rtccamgen.Generator
+
 	clientsMutex sync.Mutex
 	clients      map[int64]*RTCCamClient
 }
 
-func (cm *RTCCamClientManager) AddClient(client *RTCCamClient) {
+func (cm *RTCCamClientManager) CreateClient(ws *websocket.Conn) *RTCCamClient {
 	cm.clientsMutex.Lock()
 	defer cm.clientsMutex.Unlock()
 
-	client.ClientId = cm.generateClientId()
+	// ID 생성
+	client := NewRTCCamClient(ws)
+	client.ClientId = cm.idGenerator.GenerateID()
+
 	cm.clients[client.ClientId] = client
+
+	return client
 }
 
 func (cm *RTCCamClientManager) RemoveClient(client *RTCCamClient) {
 	cm.clientsMutex.Lock()
 	defer cm.clientsMutex.Unlock()
+
+	// 반납
+	cm.idGenerator.ReturnID(client.ClientId)
 
 	_, ok := cm.clients[client.ClientId]
 	if !ok {
@@ -62,15 +73,4 @@ func (cm *RTCCamClientManager) CloseAll() {
 	}
 
 	wg.Wait()
-}
-
-var nextClientId int64 = 0
-
-func (c *RTCCamClientManager) generateClientId() int64 {
-	if nextClientId == math.MaxInt64 {
-		atomic.StoreInt64(&nextClientId, 0)
-	}
-	atomic.AddInt64(&nextClientId, 1)
-
-	return nextClientId
 }

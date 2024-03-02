@@ -8,16 +8,8 @@ import (
 	"sync"
 )
 
-var nextRoomIdMutex sync.Mutex
-var nextRoomId int64 = 0
-
 func NewRoom(title, password string, maxClientCount int) *Room {
-	nextRoomIdMutex.Lock()
-	defer nextRoomIdMutex.Unlock()
-
-	nextRoomId++
 	return &Room{
-		Id:             nextRoomId,
 		Title:          title,
 		IsPassword:     password != "",
 		Password:       password,
@@ -129,4 +121,13 @@ func (r *Room) GetClientCount() int {
 	defer r.clientsMutex.Unlock()
 
 	return len(r.Clients)
+}
+
+func (r *Room) Broadcast(message interface{}) {
+	r.clientsMutex.Lock()
+	defer r.clientsMutex.Unlock()
+
+	for _, client := range r.Clients {
+		client.Send(message)
+	}
 }

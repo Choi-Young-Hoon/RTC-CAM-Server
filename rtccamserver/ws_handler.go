@@ -2,11 +2,10 @@ package rtccamserver
 
 import (
 	"github.com/gorilla/websocket"
-	"rtccam/rtccamlog"
-
 	"net/http"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
+	"rtccam/rtccamlog"
 )
 
 var upgrader = websocket.Upgrader{
@@ -41,9 +40,8 @@ func RTCCamWSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	clientManager := rtccamclient.GetRTCCamClientManager()
-	client := rtccamclient.NewRTCCamClient(conn)
+	client := clientManager.CreateClient(conn)
 	defer RTCCamWSCientClose(client)
-	clientManager.AddClient(client)
 
 	rtccamlog.Info().Str("Client connected ip", r.RemoteAddr).Send()
 	RTCCamServerRun(client)

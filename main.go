@@ -12,7 +12,7 @@ import (
 	"syscall"
 )
 
-func infoLog(httpProtocol, servicePort, certPem, privKeyPem string) {
+func info(httpProtocol, servicePort, certPem, privKeyPem string) {
 	fmt.Println("============================================")
 	fmt.Println("=           RTCCam Server Start            =")
 	fmt.Println("=================  Info  ===================")
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	// Start Server
-	infoLog(*httpProtocol, *servicePort, *certPem, *privKeyPem)
+	info(*httpProtocol, *servicePort, *certPem, *privKeyPem)
 	go startServer(*httpProtocol, *servicePort, *certPem, *privKeyPem)
 
 	// Stop Server

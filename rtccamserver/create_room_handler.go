@@ -9,6 +9,7 @@ import (
 )
 
 func CreateRoomHandler(client *rtccamclient.RTCCamClient, createRoomRequestMessage *rtccammessage.CreateRoomRequestMessage) {
+	rtccamlog.Info().Msg("Creat Room Start")
 	if createRoomRequestMessage.MaxClientCount <= 0 && createRoomRequestMessage.MaxClientCount > 10 {
 		rtccamlog.Error().
 			Err(rtccamerrors.ErrorInvalidMaxClientCount).
@@ -20,9 +21,8 @@ func CreateRoomHandler(client *rtccamclient.RTCCamClient, createRoomRequestMessa
 	}
 
 	roomManager := roommanager.GetRoomManager()
-	room := roommanager.NewRoom(createRoomRequestMessage.Title, createRoomRequestMessage.Password, createRoomRequestMessage.MaxClientCount)
+	room := roomManager.CreatRoom(createRoomRequestMessage.Title, createRoomRequestMessage.Password, createRoomRequestMessage.MaxClientCount)
 	authToken := room.GenerateAuthToken()
-	roomManager.AddRoom(room)
 
 	roomListMessage := rtccammessage.NewRTCCamRoomListMessage(roomManager)
 	rtccamclient.GetRTCCamClientManager().Broadcast(roomListMessage)
