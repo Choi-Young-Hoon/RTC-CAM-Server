@@ -72,7 +72,7 @@ nav ul li a {
     left: 0;
     background-color: #111;
     overflow-x: hidden;
-    transition: width 1s;
+    transition: width 0.2s;
     padding-top: 60px;
 }
 
@@ -82,8 +82,7 @@ nav ul li a {
     text-align: right;
     color: #818181;
     display: block;
-    padding-right: 20px; /* 오른쪽 패딩 추가 */
-    transition: 1s;
+    padding-right: 20px;
 }
 
 #mySidenav a:hover {
@@ -101,12 +100,10 @@ nav ul li a {
 
 #mySidenav tr {
     white-space: nowrap;
-    transition: width 1s;
 }
 
 #mySidenav td {
     white-space: nowrap;
-    transition: width 1s;
 }
 
 .blue-background {

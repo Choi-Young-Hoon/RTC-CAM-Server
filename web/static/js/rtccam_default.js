@@ -508,7 +508,7 @@ function openMenu() {
     if (document.getElementById('mySidenav').style.width !== "0px") {
         closeMenu();
     } else {
-        document.getElementById("mySidenav").style.width = "300px";
+        document.getElementById("mySidenav").style.width = "35vw";
         document.getElementById("rtccamOverlay").style.width = "100%";
     }
 }
