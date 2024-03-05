@@ -14,8 +14,20 @@ var iceServers = [];
 var localVideoStream = null;
 
 window.onload = function() {
-    initRTCCamSocket();
+    var isIphone = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+    if (isIphone) {
+        alert("IOS는 지원되지 않습니다");
+        window.location.href = "https://www.google.com";
+    } else {
+        initRTCCamSocket();
+    }
 };
+
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && (rtcCamSocket.readyState === WebSocket.CLOSED || rtcCamSocket.readyState === WebSocket.CLOSING)) {
+        initRTCCamSocket();
+    }
+});
 
 // Android 에서 video 전체화면 재생 활성화
 function localVideoFullScreen() {
@@ -82,8 +94,6 @@ function initRTCCamSocket() {
 
         if (data.room_id !== undefined) {
             handlerCreateRoom(data);
-        } else if (data.auth_token !== undefined) { // auth token
-            handlerAuthToken(data);
         } else if (data.result_message !== undefined) {
             handlerResultMessage(data);
         } else if (data.request_type !== undefined) {
@@ -96,11 +106,6 @@ function initRTCCamSocket() {
             }
         }
     }
-}
-
-function handlerAuthToken(data) {
-    moveRoom(data.room_info.id, data.auth_token);
-
 }
 
 function handlerCreateRoom(data) {
@@ -121,6 +126,10 @@ function handlerResultMessage(data) {
         updateRoomInfo(data.room_info);
     } else if (data.result_message === "leave_client") {
         peerClose(data.client_id);
+    } else if (data.result_message === "auth_token") {
+        moveRoom(data.room_info.id, data.auth_token);
+    } else if (data.result_message === "public_auth_token") {
+        showPublicUrl(data.auth_token);
     }
 }
 
@@ -174,6 +183,14 @@ function requestRoomList() {
     rtcCamSocket.send(JSON.stringify({
         room: {
             request_type: 'room_list',
+        }
+    }));
+}
+
+function requestPublicUrl() {
+    rtcCamSocket.send(JSON.stringify({
+        room: {
+            request_type: 'public_auth_token',
         }
     }));
 }
@@ -593,4 +610,22 @@ function onMaxParticipantsInput() {
     } else if (min > value) {
         myParticipants.value = min;
     }
+}
+
+function createPublicUrl() {
+    requestPublicUrl();
+}
+
+function showPublicUrl(authToken) {
+    var publicUrl = document.getElementById('publicUrl');
+    publicUrl.value = window.location.origin + "/room?join_room=" + joinRoomId + "&auth_token=" + authToken;
+    showUrlModal();
+}
+
+function showUrlModal() {
+    document.getElementById('publicUrlModal').style.display = 'block';
+}
+
+function closeUrlModal() {
+    document.getElementById('publicUrlModal').style.display = 'none';
 }

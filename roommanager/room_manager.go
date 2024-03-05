@@ -16,7 +16,7 @@ func GetRoomManager() *RoomManager {
 }
 
 type RoomManager struct {
-	idGenerator rtccamgen.Generator
+	idGenerator rtccamgen.IDGeneratorInterface
 
 	roomsMutex sync.Mutex
 	Rooms      map[int64]*Room `json:"rooms"`
@@ -26,7 +26,7 @@ func (rm *RoomManager) CreatRoom(title, password string, maxClientCount int) *Ro
 	rm.roomsMutex.Lock()
 	defer rm.roomsMutex.Unlock()
 
-	room := NewRoom(title, password, maxClientCount)
+	room := NewRoom(title, password, maxClientCount, rtccamgen.NewAuthTokenGenerator())
 	room.Id = rm.idGenerator.GenerateID()
 
 	rm.Rooms[room.Id] = room

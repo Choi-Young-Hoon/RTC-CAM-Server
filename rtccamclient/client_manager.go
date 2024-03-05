@@ -16,7 +16,7 @@ func GetRTCCamClientManager() *RTCCamClientManager {
 }
 
 type RTCCamClientManager struct {
-	idGenerator rtccamgen.Generator
+	idGenerator rtccamgen.IDGeneratorInterface
 
 	clientsMutex sync.Mutex
 	clients      map[int64]*RTCCamClient

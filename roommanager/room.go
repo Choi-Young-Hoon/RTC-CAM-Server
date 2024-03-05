@@ -1,21 +1,22 @@
 package roommanager
 
 import (
-	"math/rand"
 	"rtccam/rtccamclient"
 	"rtccam/rtccamerrors"
+	"rtccam/rtccamgen"
 	"rtccam/rtccammessage"
 	"sync"
 )
 
-func NewRoom(title, password string, maxClientCount int) *Room {
+func NewRoom(title, password string, maxClientCount int, tokenGenerator rtccamgen.AuthTokenGeneratorInterface) *Room {
 	return &Room{
-		Title:          title,
-		IsPassword:     password != "",
-		Password:       password,
-		MaxClientCount: maxClientCount,
-		Clients:        make(map[int64]*rtccamclient.RTCCamClient),
-		AuthTokens:     make(map[string]int),
+		Title:                       title,
+		IsPassword:                  password != "",
+		Password:                    password,
+		MaxClientCount:              maxClientCount,
+		Clients:                     make(map[int64]*rtccamclient.RTCCamClient),
+		AuthTokens:                  make(map[string]int),
+		AuthTokenGeneratorInterface: tokenGenerator,
 	}
 }
 
@@ -30,22 +31,24 @@ type Room struct {
 	clientsMutex sync.Mutex
 	Clients      map[int64]*rtccamclient.RTCCamClient `json:"clients"`
 
+	rtccamgen.AuthTokenGeneratorInterface
 	deleteAuthTokenMutex sync.Mutex
 	AuthTokens           map[string]int `json:"-"`
+	PublicAuthToken      string
 }
 
 func (r *Room) GenerateAuthToken() string {
-	const charset = "abcdefghijklmnopqrstuvwxyz" +
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-	authToken := make([]byte, 20)
-	for i := range authToken {
-		authToken[i] = charset[rand.Intn(len(charset))]
-	}
+	authToken := r.AuthTokenGeneratorInterface.GenerateAuthToken()
 
 	r.AuthTokens[string(authToken)]++
 
 	return string(authToken)
+}
+
+func (r *Room) GeneratePublicAuthToken() string {
+	r.PublicAuthToken = r.AuthTokenGeneratorInterface.GenerateAuthToken()
+
+	return r.PublicAuthToken
 }
 
 func (r *Room) Authenticate(authToken string) bool {

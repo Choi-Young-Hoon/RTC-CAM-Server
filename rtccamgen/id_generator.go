@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type Generator interface {
+type IDGeneratorInterface interface {
 	GenerateID() int64
 	ReturnID(id int64)
 }

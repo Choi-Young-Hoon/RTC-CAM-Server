@@ -43,6 +43,13 @@ func NewRTCCamAuthTokenMessage(authToken string, room interface{}) *RTCCamRespon
 	}
 }
 
+func NewRTCCamPublicAuthTokenMessage(authToken string) *RTCCamResponseMessage {
+	return &RTCCamResponseMessage{
+		ResultMessage: "public_auth_token",
+		AutoToken:     authToken,
+	}
+}
+
 type RTCCamResponseMessage struct {
 	ResultMessage string `json:"result_message"`
 

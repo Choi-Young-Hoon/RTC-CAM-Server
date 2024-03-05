@@ -12,9 +12,9 @@ func getCallerName() string {
 }
 
 func Info() *zerolog.Event {
-	return log.Info().Caller(1)
+	return log.Info().Caller(1).Str("Caller", getCallerName())
 }
 
 func Error() *zerolog.Event {
-	return log.Error().Caller(1)
+	return log.Error().Caller(1).Str("Caller", getCallerName())
 }

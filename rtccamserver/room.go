@@ -23,6 +23,7 @@ func NewRoomMessageDispatcher() *RoomMessageDispatcher {
 	roomMessageDispatcher.AddHandleHandler(rtccammessage.RoomRequestTypeJoinRoom, roomJoinHandler)
 	roomMessageDispatcher.AddHandleHandler(rtccammessage.RoomRequestTypeLeaveRoom, roomLeaveHandler)
 	roomMessageDispatcher.AddHandleHandler(rtccammessage.RoomRequestAuthToken, roomAuthTokenHandler)
+	roomMessageDispatcher.AddHandleHandler(rtccammessage.RoomRequestPublicAuthToken, roomPublicAuthTokenHandler)
 
 	return roomMessageDispatcher
 }
@@ -86,10 +87,14 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtcc
 		return
 	}
 
-	if room.Authenticate(roomRequestMessage.AuthToken) == false {
-		rtccamlog.Error().Err(rtccamerrors.ErrorInvalidAuthToken).Any("ClientId", client.ClientId).Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorInvalidAuthToken.Error()))
-		return
+	// 공개용 URL 을 사용해서 들어온 경우
+	if room.PublicAuthToken != roomRequestMessage.AuthToken {
+		// 일반 방 생성 및 방 입장일 경우
+		if room.Authenticate(roomRequestMessage.AuthToken) == false {
+			rtccamlog.Error().Err(rtccamerrors.ErrorInvalidAuthToken).Any("ClientId", client.ClientId).Send()
+			client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorInvalidAuthToken.Error()))
+			return
+		}
 	}
 
 	rtccamlog.Info().Any("ClientId", client.ClientId).Int64("Join RoomId", room.Id).Send()
@@ -130,6 +135,24 @@ func roomAuthTokenHandler(client *rtccamclient.RTCCamClient, roomRequestMessage 
 
 	authToken := room.GenerateAuthToken()
 	client.Send(rtccammessage.NewRTCCamAuthTokenMessage(authToken, room))
+}
+
+func roomPublicAuthTokenHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtccammessage.RoomRequestMessage) {
+	rtccamlog.Info().
+		Any("ClientId", client.ClientId).
+		Int64("Client JoinRoomId", client.JoinRoomId).
+		Send()
+
+	roomManager := roommanager.GetRoomManager()
+	room, err := roomManager.GetRoom(client.JoinRoomId)
+	if err != nil {
+		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
+		return
+	}
+
+	authToken := room.GeneratePublicAuthToken()
+	client.Send(rtccammessage.NewRTCCamPublicAuthTokenMessage(authToken))
 }
 
 func roomLeave(client *rtccamclient.RTCCamClient) {
