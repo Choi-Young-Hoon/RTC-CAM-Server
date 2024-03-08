@@ -58,6 +58,7 @@ nav ul li a {
     white-space: nowrap;
     margin-left: 10px;
 }
+
 @media (max-width: 768px) {
     nav ul li a {
         font-size: 3vw;

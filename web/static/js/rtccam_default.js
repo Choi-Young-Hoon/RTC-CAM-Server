@@ -82,6 +82,7 @@ function runAndroidApp(joinRoomId, authToken) {
     }
 
     if (!isAndroidInApp()) {
+        /*
         var isAppOpened = window.open(urlScheme, "_blank");
         if (!isAppOpened) {
             alert("어플을 설치하세요!");
@@ -89,6 +90,12 @@ function runAndroidApp(joinRoomId, authToken) {
         } else {
             moveHome();
         }
+        */
+        window.location.href = urlScheme;
+        
+        setTimeout(function() {
+            window.location.href = "http://gofile.me/6EdCf/AmIDNwX5W";
+        }, 500);
     }
 }
 
@@ -576,7 +583,7 @@ function openMenu() {
         closeMenu();
     } else {
 
-        var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        var isMobile = /iPhone|iPad|iPod|Android|rtccam/i.test(navigator.userAgent);
         if (isMobile) {
             document.getElementById("mySidenav").style.width = "100%";
         } else {

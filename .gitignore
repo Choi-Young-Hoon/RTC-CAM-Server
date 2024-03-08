@@ -7,7 +7,7 @@
 
 rtccam 
 *.bat
-.json
+*.json
 
 *.pem
 # User-specific stuff
