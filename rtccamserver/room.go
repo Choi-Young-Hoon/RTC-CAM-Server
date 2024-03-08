@@ -1,6 +1,7 @@
 package rtccamserver
 
 import (
+	"errors"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
 	"rtccam/rtccamerrors"
@@ -46,12 +47,13 @@ func (r *RoomMessageDispatcher) RoomHandler(client *rtccamclient.RTCCamClient, r
 
 	handle, ok := r.handles[roomRequestMessage.RequestType]
 	if !ok {
+		resultTypeError := rtccamerrors.NewRequestTypeError()
 		rtccamlog.Error().
-			Err(rtccamerrors.ErrorRequestTypeError).
+			Err(errors.New(resultTypeError.Message)).
 			Any("ClientId", client.ClientId).
 			Str("RequestType", roomRequestMessage.RequestType).
 			Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorRequestTypeError.Error()))
+		client.Send(rtccammessage.NewRTCCamErrorMessage(resultTypeError))
 		return
 	}
 
@@ -82,8 +84,8 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtcc
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(roomRequestMessage.RoomId)
 	if err != nil {
-		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
+		rtccamlog.Error().Err(errors.New(err.Message)).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(err))
 		return
 	}
 
@@ -91,8 +93,9 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtcc
 	if room.PublicAuthToken != roomRequestMessage.AuthToken {
 		// 일반 방 생성 및 방 입장일 경우
 		if room.Authenticate(roomRequestMessage.AuthToken) == false {
-			rtccamlog.Error().Err(rtccamerrors.ErrorInvalidAuthToken).Any("ClientId", client.ClientId).Send()
-			client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorInvalidAuthToken.Error()))
+			authTokenError := rtccamerrors.NewInvalidAuthToken()
+			rtccamlog.Error().Err(errors.New(authTokenError.Message)).Any("ClientId", client.ClientId).Send()
+			client.Send(rtccammessage.NewRTCCamErrorMessage(authTokenError))
 			return
 		}
 	}
@@ -116,20 +119,22 @@ func roomAuthTokenHandler(client *rtccamclient.RTCCamClient, roomRequestMessage 
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(roomRequestMessage.RoomId)
 	if err != nil {
-		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
+		rtccamlog.Error().Err(errors.New(err.Message)).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(err))
 		return
 	}
 
 	if room.MaxClientCount <= room.GetClientCount() {
-		rtccamlog.Error().Err(rtccamerrors.ErrorRoomIsFull).Any("ClientId", client.ClientId).Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorRoomIsFull.Error()))
+		roomFullError := rtccamerrors.NewRoomIsFull()
+		rtccamlog.Error().Err(errors.New(roomFullError.Message)).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(roomFullError))
 		return
 	}
 
 	if room.IsPassword && room.Password != roomRequestMessage.Password {
-		rtccamlog.Error().Err(rtccamerrors.ErrorInvalidPassword).Any("ClientId", client.ClientId).Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(rtccamerrors.ErrorInvalidPassword.Error()))
+		invalidPasswordError := rtccamerrors.NewInvalidPassword()
+		rtccamlog.Error().Err(errors.New(invalidPasswordError.Message)).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(invalidPasswordError))
 		return
 	}
 
@@ -146,13 +151,15 @@ func roomPublicAuthTokenHandler(client *rtccamclient.RTCCamClient, roomRequestMe
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
-		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
+		rtccamlog.Error().Err(errors.New(err.Message)).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(err))
 		return
 	}
 
-	authToken := room.GeneratePublicAuthToken()
-	client.Send(rtccammessage.NewRTCCamPublicAuthTokenMessage(authToken))
+	if room.PublicAuthToken == "" {
+		room.GeneratePublicAuthToken()
+	}
+	client.Send(rtccammessage.NewRTCCamPublicAuthTokenMessage(room.PublicAuthToken))
 }
 
 func roomLeave(client *rtccamclient.RTCCamClient) {
@@ -164,8 +171,8 @@ func roomLeave(client *rtccamclient.RTCCamClient) {
 			return
 		}
 
-		rtccamlog.Error().Err(err).Any("ClientId", client.ClientId).Send()
-		client.Send(rtccammessage.NewRTCCamErrorMessage(err.Error()))
+		rtccamlog.Error().Err(errors.New(err.Message)).Any("ClientId", client.ClientId).Send()
+		client.Send(rtccammessage.NewRTCCamErrorMessage(err))
 		return
 	}
 

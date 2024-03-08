@@ -1,5 +1,7 @@
 package rtccammessage
 
+import "rtccam/rtccamerrors"
+
 func NewRTCCamSuccessMessage() *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
 		ResultMessage: "success",
@@ -15,10 +17,10 @@ func NewRTCCamJoinSuccessMessage(room interface{}, joinClientId int64) *RTCCamRe
 	}
 }
 
-func NewRTCCamErrorMessage(errorMessage string) *RTCCamResponseMessage {
+func NewRTCCamErrorMessage(rtccamError *rtccamerrors.RTCCamError) *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
 		ResultMessage: "error",
-		ErrorMessage:  errorMessage,
+		RTCCamError:   rtccamError,
 	}
 }
 
@@ -53,8 +55,7 @@ func NewRTCCamPublicAuthTokenMessage(authToken string) *RTCCamResponseMessage {
 type RTCCamResponseMessage struct {
 	ResultMessage string `json:"result_message"`
 
-	ErrorCode    int    `json:"error_code,omitempty"`
-	ErrorMessage string `json:"error_message,omitempty"`
+	RTCCamError *rtccamerrors.RTCCamError `json:"error,omitempty"`
 
 	ClientId int64 `json:"client_id,omitempty"`
 

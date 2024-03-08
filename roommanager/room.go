@@ -108,13 +108,13 @@ func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) error {
 	return nil
 }
 
-func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, error) {
+func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, *rtccamerrors.RTCCamError) {
 	r.clientsMutex.Lock()
 	defer r.clientsMutex.Unlock()
 
 	client, ok := r.Clients[clientId]
 	if !ok {
-		return nil, rtccamerrors.ErrorClientNotFound
+		return nil, rtccamerrors.NewClientNotFound()
 	}
 	return client, nil
 }

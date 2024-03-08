@@ -1,6 +1,7 @@
 package rtccamserver
 
 import (
+	"errors"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
 	"rtccam/rtccamlog"
@@ -16,9 +17,9 @@ func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMes
 	roomManager := roommanager.GetRoomManager()
 	room, err := roomManager.GetRoom(client.JoinRoomId)
 	if err != nil {
-		errorMessage := rtccammessage.NewRTCCamErrorMessage(err.Error())
+		errorMessage := rtccammessage.NewRTCCamErrorMessage(err)
 		rtccamlog.Error().
-			Err(err).
+			Err(errors.New(err.Message)).
 			Any("ClientId", client.ClientId).
 			Int64("RoomId", client.JoinRoomId).
 			Send()
@@ -29,11 +30,11 @@ func SignalingRouteHander(client *rtccamclient.RTCCamClient, signalingRequestMes
 	responseClient, err := room.GetClient(signalingRequestMessage.ResponseClientId)
 	if err != nil {
 		rtccamlog.Error().
-			Err(err).
+			Err(errors.New(err.Message)).
 			Any("ClientId", client.ClientId).
 			Any("ResponseClientId", signalingRequestMessage.ResponseClientId).
 			Send()
-		errorMessage := rtccammessage.NewRTCCamErrorMessage(err.Error())
+		errorMessage := rtccammessage.NewRTCCamErrorMessage(err)
 		client.Send(errorMessage)
 		return
 	}
@@ -45,12 +46,9 @@ func SignalingHandler(client *rtccamclient.RTCCamClient, signalingRequestMessage
 	switch signalingRequestMessage.RequestType {
 	case rtccammessage.SignalingRequestTypeOffer:
 		SignalingRouteHander(client, signalingRequestMessage)
-		break
 	case rtccammessage.SignalingRequestTypeAnswer:
 		SignalingRouteHander(client, signalingRequestMessage)
-		break
 	case rtccammessage.SignalingRequestTypeCandidate:
 		SignalingRouteHander(client, signalingRequestMessage)
-		break
 	}
 }

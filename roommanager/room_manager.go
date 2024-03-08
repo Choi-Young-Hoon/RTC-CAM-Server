@@ -47,13 +47,13 @@ func (rm *RoomManager) RemoveRoom(room *Room) {
 	rm.idGenerator.ReturnID(room.Id)
 }
 
-func (rm *RoomManager) GetRoom(roomId int64) (*Room, error) {
+func (rm *RoomManager) GetRoom(roomId int64) (*Room, *rtccamerrors.RTCCamError) {
 	rm.roomsMutex.Lock()
 	defer rm.roomsMutex.Unlock()
 
 	room, ok := rm.Rooms[roomId]
 	if !ok {
-		return nil, rtccamerrors.ErrorRoomNotFound
+		return nil, rtccamerrors.NewRoomNotFound()
 	}
 
 	return room, nil

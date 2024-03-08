@@ -10,15 +10,16 @@ package rtccammessage
 
 func GetICEServers() []ICEServer {
 	iceServers := []ICEServer{
-		ICEServer{
+		{
 			Urls: "stun:stun.l.google.com:19302",
 		},
-		ICEServer{
-			Urls:       "turn:kyj9447.iptime.org:50001",
-			UserName:   "test",
-			Credential: "test",
+		{
+			Urls: "stun:stun1.l.google.com:19302",
 		},
-		ICEServer{
+		{
+			Urls: "stun:stun2.l.google.com:19302",
+		},
+		{
 			Urls:       "turn:choiyh.synology.me:50001",
 			UserName:   "test",
 			Credential: "test",

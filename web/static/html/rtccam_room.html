@@ -31,9 +31,9 @@
 </footer>
 
 <!-- 공개용 URL 창 -->
-<div id="publicUrlModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border: 2px solid black; border-radius: 10px; font-size: 10px; box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 8px;">
-    <p>공개용 URL: <input type="text" id="publicUrl" value="없음" readonly></p>
-    <button onclick="createPublicUrl()">생성</button>
+<div id="publicUrlModal" class="public-url-modal">
+    
+    <p>공개용 URL: <textarea id="publicUrl" class="public-url" readonly></textarea></p>
     <button onclick="closeUrlModal()">닫기</button>
 </div>
 {{template "rtccam_footer.html"}}

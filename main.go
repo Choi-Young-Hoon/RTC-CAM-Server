@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 	"rtccam/rtccamlog"
 	"rtccam/rtccamweb"
 	"syscall"
 	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func info(httpProtocol, servicePort, certPem, privKeyPem string) {
@@ -24,17 +25,14 @@ func info(httpProtocol, servicePort, certPem, privKeyPem string) {
 		fmt.Println("= PrivKey Pem: ", privKeyPem)
 	}
 	fmt.Println("============================================")
-
 }
 
 func startServer(httpProtocol, servicePort, certPem, privKeyPem string) {
 	switch httpProtocol {
 	case "http":
 		rtccamweb.StartHTTPServer(servicePort)
-		break
 	case "https":
 		rtccamweb.StartHTTPSServer(servicePort, certPem, privKeyPem)
-		break
 	default:
 		rtccamlog.Error().Msg("Invalid http protocol: " + httpProtocol)
 	}

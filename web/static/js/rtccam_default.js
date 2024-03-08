@@ -63,6 +63,35 @@ function localFullScreen(isFullScreen) {
     }
 }
 
+
+function isAndroid() {
+    return /Android/.test(navigator.userAgent);
+}
+
+function isAndroidInApp() {
+    var isApp = navigator.userAgent.indexOf("rtccamclient") > -1;
+    
+    return isApp;
+}
+
+function runAndroidApp(joinRoomId, authToken) {
+    
+    var urlScheme = "rtccam://choiyh.synology.me";
+    if (joinRoomId != null && authToken != null) {
+        urlScheme += "?join_room=" + joinRoomId + "&auth_token=" + authToken;
+    }
+
+    if (!isAndroidInApp()) {
+        var isAppOpened = window.open(urlScheme, "_blank");
+        if (!isAppOpened) {
+            alert("어플을 설치하세요!");
+            window.location.href = "https://play.google.com/store/apps/details?id=me.synology.choiyh.rtccamclient";
+        } else {
+            moveHome();
+        }
+    }
+}
+
 function initRTCCamSocket() {
     rtcCamSocket = new WebSocket(rtcCamWSServerUrl);
     rtcCamSocket.onopen = function () {
@@ -116,20 +145,36 @@ function handlerResultMessage(data) {
     if (data.result_message === "success") {
         showRoomList(data.rooms);
     } else if (data.result_message === "error") {
-        //alert(data.error_message);
-        moveHome();
+        handlerError(data.error);
     } else if (data.result_message === "join_success") {
         iceServers = data.ice_servers;
         currentClientId = data.client_id;
         joinRoomId = data.room_info.id;
         startStreaming(data.room_info);
         updateRoomInfo(data.room_info);
+        requestPublicUrl();
     } else if (data.result_message === "leave_client") {
         peerClose(data.client_id);
     } else if (data.result_message === "auth_token") {
         moveRoom(data.room_info.id, data.auth_token);
     } else if (data.result_message === "public_auth_token") {
         showPublicUrl(data.auth_token);
+        if (isAndroid()) {
+            runAndroidApp(joinRoomId, data.auth_token);
+        }
+    }
+}
+
+function handlerError(error) {
+    if (error.error_code == 1003 || // 방이 꽉 찼습니다.
+        error.error_code == 1005 || // 방 제목이 비어있습니다.
+        error.error_code == 1006 || // 최대 인원 수가 올바르지 않습니다.
+        error.error_code == 1007) {
+        alert(error.error_message);
+    } else if (error.error_code == 1001) { // 클라이언트를 찾을 수 없을떄
+
+    } else { 
+        moveHome();
     }
 }
 
@@ -242,6 +287,10 @@ function requestCandidate(clientId, candidate) {
 }
 
 function startStreaming(roomInfo) {
+    if (isAndroid()) {
+        return;
+    }
+
     navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
         localVideoStream = stream;
 
@@ -269,7 +318,9 @@ function startStreaming(roomInfo) {
         updateVideoElement();
 
     }).catch(error => {
+        rtcCamSocket.close();
         alert("카메라와 오디오를 사용할 수 없습니다. Error: " + error);
+        moveHome();
     });
 }
 
@@ -612,14 +663,10 @@ function onMaxParticipantsInput() {
     }
 }
 
-function createPublicUrl() {
-    requestPublicUrl();
-}
 
 function showPublicUrl(authToken) {
     var publicUrl = document.getElementById('publicUrl');
     publicUrl.value = window.location.origin + "/room?join_room=" + joinRoomId + "&auth_token=" + authToken;
-    showUrlModal();
 }
 
 function showUrlModal() {

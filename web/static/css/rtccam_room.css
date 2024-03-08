@@ -177,3 +177,26 @@
     margin: 0 10px;
     display: inline-block;
 }
+
+.public-url-modal {
+    display: none; 
+    position: fixed; 
+    top: 50%; 
+    left: 50%; 
+    width: 85%;
+    transform: translate(-50%, -50%); 
+    background-color: white; 
+    padding: 20px; 
+    border: 2px solid black; 
+    border-radius: 10px; 
+    font-size: 10px; 
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 8px;
+}
+
+.public-url {
+    width: 100%;
+    height: auto;
+    min-height: 100px;
+    overflow-y: auto;
+    resize: none;
+}
