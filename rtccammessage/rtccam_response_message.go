@@ -1,6 +1,6 @@
 package rtccammessage
 
-import "rtccam/rtccamerrors"
+import "rtccam/rtccametc"
 
 func NewRTCCamSuccessMessage() *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
@@ -8,16 +8,16 @@ func NewRTCCamSuccessMessage() *RTCCamResponseMessage {
 	}
 }
 
-func NewRTCCamJoinSuccessMessage(room interface{}, joinClientId int64) *RTCCamResponseMessage {
+func NewRTCCamJoinSuccessMessage(room interface{}, joinClientId int64, iceServers []interface{}) *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
 		ResultMessage: "join_success",
 		RoomInfo:      room,
 		ClientId:      joinClientId,
-		ICEServers:    GetICEServers(),
+		ICEServers:    iceServers,
 	}
 }
 
-func NewRTCCamErrorMessage(rtccamError *rtccamerrors.RTCCamError) *RTCCamResponseMessage {
+func NewRTCCamErrorMessage(rtccamError *rtccametc.RTCCamError) *RTCCamResponseMessage {
 	return &RTCCamResponseMessage{
 		ResultMessage: "error",
 		RTCCamError:   rtccamError,
@@ -55,7 +55,7 @@ func NewRTCCamPublicAuthTokenMessage(authToken string) *RTCCamResponseMessage {
 type RTCCamResponseMessage struct {
 	ResultMessage string `json:"result_message"`
 
-	RTCCamError *rtccamerrors.RTCCamError `json:"error,omitempty"`
+	RTCCamError *rtccametc.RTCCamError `json:"error,omitempty"`
 
 	ClientId int64 `json:"client_id,omitempty"`
 
@@ -64,5 +64,5 @@ type RTCCamResponseMessage struct {
 	RoomManager interface{} `json:"rooms,omitempty"`     // RoomManager 구조체를 넣어줘야한다.
 	RoomInfo    interface{} `json:"room_info,omitempty"` // Room 구조체를 넣어줘야한다. join_success 시 생성
 
-	ICEServers []ICEServer `json:"ice_servers,omitempty"`
+	ICEServers []interface{} `json:"ice_servers,omitempty"`
 }

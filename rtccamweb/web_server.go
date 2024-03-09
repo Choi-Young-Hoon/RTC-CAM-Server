@@ -5,11 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"rtccam/rtccamclient"
+	"rtccam/rtccametc"
 	"rtccam/rtccamserver"
 )
 
 var httpServer *http.Server = &http.Server{}
 var HTTPProtocol string
+var ImageServerUrl string
 
 func initHTTPHandler() {
 	//http.Handle("/js/", fs)
@@ -18,27 +20,28 @@ func initHTTPHandler() {
 	http.Handle("/js/", http.FileServer(http.Dir("./web/static")))
 	http.Handle("/css/", http.FileServer(http.Dir("./web/static")))
 	http.Handle("/img/", http.FileServer(http.Dir("./web/resource/")))
+	http.Handle("/favicon.ico", http.FileServer(http.Dir("./web/resource/")))
 
 	http.HandleFunc("/", HTTPRTCCamHomeHandler)
 	http.HandleFunc("/room", HTTPRTCCamRoomHandler)
 	http.HandleFunc("/rtccam", rtccamserver.RTCCamWSHandler)
 }
 
-func StartHTTPSServer(servicePort string, certPem string, privKeyPem string) {
+func StartHTTPSServer(serverConfig rtccametc.ServerConfig, httpsCert rtccametc.HTTPSCert) {
 	initHTTPHandler()
 
 	HTTPProtocol = "https"
-	httpServer.Addr = ":" + servicePort
-	if err := httpServer.ListenAndServeTLS(certPem, privKeyPem); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	httpServer.Addr = ":" + serverConfig.Port
+	if err := httpServer.ListenAndServeTLS(httpsCert.CertFile, httpsCert.PrivKeyFile); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		panic(err)
 	}
 }
 
-func StartHTTPServer(servicePort string) {
+func StartHTTPServer(serverConfig rtccametc.ServerConfig) {
 	initHTTPHandler()
 
 	HTTPProtocol = "http"
-	httpServer.Addr = ":" + servicePort
+	httpServer.Addr = ":" + serverConfig.Port
 	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		panic(err)
 	}

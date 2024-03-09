@@ -4,10 +4,12 @@ import (
 	"errors"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
-	"rtccam/rtccamerrors"
+	"rtccam/rtccametc"
 	"rtccam/rtccamlog"
 	"rtccam/rtccammessage"
 )
+
+var ICEServers []interface{}
 
 var defaultRoomMessageDispatcher = NewRoomMessageDispatcher()
 
@@ -47,7 +49,7 @@ func (r *RoomMessageDispatcher) RoomHandler(client *rtccamclient.RTCCamClient, r
 
 	handle, ok := r.handles[roomRequestMessage.RequestType]
 	if !ok {
-		resultTypeError := rtccamerrors.NewRequestTypeError()
+		resultTypeError := rtccametc.NewRequestTypeError()
 		rtccamlog.Error().
 			Err(errors.New(resultTypeError.Message)).
 			Any("ClientId", client.ClientId).
@@ -93,7 +95,7 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtcc
 	if room.PublicAuthToken != roomRequestMessage.AuthToken {
 		// 일반 방 생성 및 방 입장일 경우
 		if room.Authenticate(roomRequestMessage.AuthToken) == false {
-			authTokenError := rtccamerrors.NewInvalidAuthToken()
+			authTokenError := rtccametc.NewInvalidAuthToken()
 			rtccamlog.Error().Err(errors.New(authTokenError.Message)).Any("ClientId", client.ClientId).Send()
 			client.Send(rtccammessage.NewRTCCamErrorMessage(authTokenError))
 			return
@@ -101,7 +103,7 @@ func roomJoinHandler(client *rtccamclient.RTCCamClient, roomRequestMessage *rtcc
 	}
 
 	rtccamlog.Info().Any("ClientId", client.ClientId).Int64("Join RoomId", room.Id).Send()
-	room.JoinClient(client)
+	room.JoinClient(client, ICEServers)
 	broadcastRoomList()
 }
 
@@ -125,14 +127,14 @@ func roomAuthTokenHandler(client *rtccamclient.RTCCamClient, roomRequestMessage 
 	}
 
 	if room.MaxClientCount <= room.GetClientCount() {
-		roomFullError := rtccamerrors.NewRoomIsFull()
+		roomFullError := rtccametc.NewRoomIsFull()
 		rtccamlog.Error().Err(errors.New(roomFullError.Message)).Any("ClientId", client.ClientId).Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(roomFullError))
 		return
 	}
 
 	if room.IsPassword && room.Password != roomRequestMessage.Password {
-		invalidPasswordError := rtccamerrors.NewInvalidPassword()
+		invalidPasswordError := rtccametc.NewInvalidPassword()
 		rtccamlog.Error().Err(errors.New(invalidPasswordError.Message)).Any("ClientId", client.ClientId).Send()
 		client.Send(rtccammessage.NewRTCCamErrorMessage(invalidPasswordError))
 		return

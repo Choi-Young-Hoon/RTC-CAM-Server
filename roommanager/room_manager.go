@@ -1,7 +1,7 @@
 package roommanager
 
 import (
-	"rtccam/rtccamerrors"
+	"rtccam/rtccametc"
 	"rtccam/rtccamgen"
 	"sync"
 )
@@ -47,13 +47,13 @@ func (rm *RoomManager) RemoveRoom(room *Room) {
 	rm.idGenerator.ReturnID(room.Id)
 }
 
-func (rm *RoomManager) GetRoom(roomId int64) (*Room, *rtccamerrors.RTCCamError) {
+func (rm *RoomManager) GetRoom(roomId int64) (*Room, *rtccametc.RTCCamError) {
 	rm.roomsMutex.Lock()
 	defer rm.roomsMutex.Unlock()
 
 	room, ok := rm.Rooms[roomId]
 	if !ok {
-		return nil, rtccamerrors.NewRoomNotFound()
+		return nil, rtccametc.NewRoomNotFound()
 	}
 
 	return room, nil

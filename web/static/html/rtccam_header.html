@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta property="og:type" content="website"> 
+    <meta property="og:title" content="RTC-CAM">
+    <meta property="og:description" content="익명 화상채팅"> 
+    <meta property="og:image" content="{{.ImageServerUrl}}/img/rtccam_logo.webp">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RTC-CAM</title>
@@ -18,7 +23,7 @@
 <!-- 타이틀 메뉴 -->
 <nav id="titleNav">
     <a href="/">
-        <div class="title"><img src="https://choiyh.synology.me:40001/img/rtccam_logo.webp" alt="RTC-CAM Logo"
+        <div class="title"><img src="{{.ImageServerUrl}}/img/rtccam_logo.webp" alt="RTC-CAM Logo"
                                 class="logo">RTC-CAM
         </div>
     </a>

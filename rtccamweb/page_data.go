@@ -1,8 +1,9 @@
 package rtccamweb
 
-func NewPageData(page string) PageData {
+func NewPageData(page, imageServerUrl string) PageData {
 	return PageData{
-		Page: page,
+		Page:           page,
+		ImageServerUrl: imageServerUrl,
 	}
 }
 

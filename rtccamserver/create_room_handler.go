@@ -4,7 +4,7 @@ import (
 	"errors"
 	"rtccam/roommanager"
 	"rtccam/rtccamclient"
-	"rtccam/rtccamerrors"
+	"rtccam/rtccametc"
 	"rtccam/rtccamlog"
 	"rtccam/rtccammessage"
 )
@@ -12,7 +12,7 @@ import (
 func CreateRoomHandler(client *rtccamclient.RTCCamClient, createRoomRequestMessage *rtccammessage.CreateRoomRequestMessage) {
 	rtccamlog.Info().Msg("Creat Room Start")
 	if createRoomRequestMessage.MaxClientCount <= 0 && createRoomRequestMessage.MaxClientCount > 10 {
-		countError := rtccamerrors.NewInvalidMaxClientCount()
+		countError := rtccametc.NewInvalidMaxClientCount()
 		rtccamlog.Error().
 			Err(errors.New(countError.Message)).
 			Any("ClientId", client.ClientId).

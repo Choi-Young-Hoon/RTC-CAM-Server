@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"rtccam/rtccametc"
 	"rtccam/rtccamlog"
+	"rtccam/rtccamserver"
 	"rtccam/rtccamweb"
 	"syscall"
 	"time"
@@ -14,27 +16,36 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func info(httpProtocol, servicePort, certPem, privKeyPem string) {
+func info(config *rtccametc.RTCCamConfig) {
+	serverConifg := config.ServerConfig
+	httpsCert := config.HTTPSCert
+
 	fmt.Println("============================================")
 	fmt.Println("=           RTCCam Server Start            =")
 	fmt.Println("=================  Info  ===================")
-	fmt.Println("= HTTP Protocol: ", httpProtocol)
-	fmt.Println("= Service Port: ", servicePort)
-	if httpProtocol == "https" {
-		fmt.Println("= Cert Pem: ", certPem)
-		fmt.Println("= PrivKey Pem: ", privKeyPem)
+	fmt.Println("= HTTP Protocol: ", serverConifg.Protocol)
+	fmt.Println("= Service Port: ", serverConifg.Port)
+	if serverConifg.Protocol == "https" {
+		fmt.Println("= Cert Pem: ", httpsCert.CertFile)
+		fmt.Println("= PrivKey Pem: ", httpsCert.PrivKeyFile)
 	}
 	fmt.Println("============================================")
 }
 
-func startServer(httpProtocol, servicePort, certPem, privKeyPem string) {
-	switch httpProtocol {
+func startServer(config *rtccametc.RTCCamConfig) {
+	serverConfig := config.ServerConfig
+	httpsCert := config.HTTPSCert
+
+	rtccamweb.ImageServerUrl = config.ImageServerUrl
+	rtccamserver.ICEServers = config.GetIceServersToJson()
+
+	switch serverConfig.Protocol {
 	case "http":
-		rtccamweb.StartHTTPServer(servicePort)
+		rtccamweb.StartHTTPServer(serverConfig)
 	case "https":
-		rtccamweb.StartHTTPSServer(servicePort, certPem, privKeyPem)
+		rtccamweb.StartHTTPSServer(serverConfig, httpsCert)
 	default:
-		rtccamlog.Error().Msg("Invalid http protocol: " + httpProtocol)
+		rtccamlog.Error().Msg("Invalid http protocol: " + serverConfig.Protocol)
 	}
 
 }
@@ -43,10 +54,7 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixNano
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339Nano})
 
-	httpProtocol := flag.String("protocol", "http", "http 프로토콜(http, https)")
-	servicePort := flag.String("p", "40001", "포트번호")
-	certPem := flag.String("c", "cert.pem", "인증서 파일")
-	privKeyPem := flag.String("k", "privKey.pem", "개인키 파일")
+	defaultConifgGen := flag.Bool("g", false, "기본 설정 파일 생성")
 	help := flag.Bool("h", false, "도와주세요")
 	flag.Parse()
 
@@ -55,14 +63,29 @@ func main() {
 		os.Exit(0)
 	}
 
+	if *defaultConifgGen {
+		rtccametc.NewDefaultConfig().WriteConfig()
+		println("Generate 'config.yaml' file")
+		os.Exit(0)
+	}
+
+	config := rtccametc.NewConifg()
+	err := config.ReadConfig()
+	if err != nil {
+		rtccamlog.Error().Err(err).Send()
+		println("please check 'config.yaml' file")
+		os.Exit(1)
+	}
+
 	// Start Server
-	info(*httpProtocol, *servicePort, *certPem, *privKeyPem)
-	go startServer(*httpProtocol, *servicePort, *certPem, *privKeyPem)
+	info(config)
+	go startServer(config)
 
 	// Stop Server
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
 	<-sigs
+	println("Stop RTC-CAM server..........")
 	rtccamweb.StopServer()
 	os.Exit(0)
 }

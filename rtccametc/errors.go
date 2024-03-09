@@ -1,4 +1,4 @@
-package rtccamerrors
+package rtccametc
 
 func NewClientNotFound() *RTCCamError {
 	return &RTCCamError{

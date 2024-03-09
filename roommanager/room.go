@@ -2,7 +2,7 @@ package roommanager
 
 import (
 	"rtccam/rtccamclient"
-	"rtccam/rtccamerrors"
+	"rtccam/rtccametc"
 	"rtccam/rtccamgen"
 	"rtccam/rtccammessage"
 	"sync"
@@ -69,7 +69,7 @@ func (r *Room) deleteAuthToken(authToken string) {
 	delete(r.AuthTokens, authToken)
 }
 
-func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) error {
+func (r *Room) JoinClient(client *rtccamclient.RTCCamClient, iceServers []interface{}) error {
 	r.clientsMutex.Lock()
 	defer r.clientsMutex.Unlock()
 
@@ -77,7 +77,7 @@ func (r *Room) JoinClient(client *rtccamclient.RTCCamClient) error {
 
 	r.Clients[client.ClientId] = client
 
-	joinSuccessMessage := rtccammessage.NewRTCCamJoinSuccessMessage(r, client.ClientId)
+	joinSuccessMessage := rtccammessage.NewRTCCamJoinSuccessMessage(r, client.ClientId, iceServers)
 	client.Send(joinSuccessMessage)
 
 	return nil
@@ -108,13 +108,13 @@ func (r *Room) LeaveClient(client *rtccamclient.RTCCamClient) error {
 	return nil
 }
 
-func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, *rtccamerrors.RTCCamError) {
+func (r *Room) GetClient(clientId int64) (*rtccamclient.RTCCamClient, *rtccametc.RTCCamError) {
 	r.clientsMutex.Lock()
 	defer r.clientsMutex.Unlock()
 
 	client, ok := r.Clients[clientId]
 	if !ok {
-		return nil, rtccamerrors.NewClientNotFound()
+		return nil, rtccametc.NewClientNotFound()
 	}
 	return client, nil
 }

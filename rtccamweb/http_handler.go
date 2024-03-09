@@ -23,8 +23,7 @@ func CreateTemplate() *template.Template {
 func HTTPRTCCamHomeHandler(w http.ResponseWriter, r *http.Request) {
 	t := CreateTemplate()
 
-	pageData := NewPageData("Home")
-	pageData.ImageServerUrl = getImageServerUrl(r)
+	pageData := NewPageData("Home", ImageServerUrl)
 
 	err := t.ExecuteTemplate(w, "rtccam_home.html", pageData)
 	if err != nil {
@@ -34,7 +33,7 @@ func HTTPRTCCamHomeHandler(w http.ResponseWriter, r *http.Request) {
 
 func RoomPageHandler(w http.ResponseWriter, r *http.Request, htmlFile string) {
 	t := CreateTemplate()
-	pageData := NewPageData("Room")
+	pageData := NewPageData("Room", ImageServerUrl)
 	joinRoom := r.URL.Query().Get("join_room")
 	authToken := r.URL.Query().Get("auth_token")
 
@@ -78,17 +77,6 @@ func getWebSocketUrl(r *http.Request) string {
 	}
 
 	return websocketUrl
-}
-
-func getImageServerUrl(r *http.Request) string {
-	imageServerUrl := ""
-	if HTTPProtocol == "https" {
-		imageServerUrl = "https://" + r.Host + "/img"
-	} else {
-		imageServerUrl = "http://" + r.Host + "/img"
-	}
-
-	return imageServerUrl
 }
 
 func RTCCAMDefaultJavascriptHandler(w http.ResponseWriter, r *http.Request) {
