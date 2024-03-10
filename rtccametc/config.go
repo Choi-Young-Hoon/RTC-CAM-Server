@@ -11,10 +11,10 @@ func NewConifg() *RTCCamConfig {
 
 func NewDefaultConfig() *RTCCamConfig {
 	return &RTCCamConfig{
-		ImageServerUrl: "https://choiyh.synology.me:40001",
+		ImageServerUrl: "http://localhost:40001",
 
 		ServerConfig: ServerConfig{
-			Protocol: "https",
+			Protocol: "http",
 			Port:     "40001",
 			HTTPSCert: HTTPSCert{
 				CertFile:    "cert.pem",
@@ -37,9 +37,9 @@ func NewDefaultConfig() *RTCCamConfig {
 
 			TurnServers: []TurnServer{
 				{
-					URL:        "turn:choiyh.synology.me:50001",
-					Username:   "test",
-					Credential: "test",
+					URL:        "turn:turn.example.com:3478",
+					Username:   "username",
+					Credential: "credential",
 				},
 			},
 		},
@@ -104,7 +104,7 @@ type HTTPSCert struct {
 
 type ServerConfig struct {
 	Protocol  string    `yaml:"protocol"`
-	HTTPSCert HTTPSCert `yaml:"https_cert"`
+	HTTPSCert HTTPSCert `yaml:"https_cert,omitempty"`
 
 	Port string `yaml:"port"`
 }
