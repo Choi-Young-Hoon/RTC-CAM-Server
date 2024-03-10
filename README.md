@@ -5,6 +5,7 @@ RTC-CAM은 WebRTC 기반의 익명 화상 채팅 서비스 입니다.
 
 [RTC-CAM 바로가기](https://choiyh.synology.me:40001)
 
+[RTC-CAM 안드로이드 클라이언트 앱 다운로드](http://gofile.me/6EdCf/AmIDNwX5W)
 
 ## 시작하기
 ### 1. RTC-CAM 설치하기
