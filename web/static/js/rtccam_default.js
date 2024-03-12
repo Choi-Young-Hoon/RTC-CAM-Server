@@ -167,18 +167,19 @@ function handlerResultMessage(data) {
     } else if (data.result_message === "public_auth_token") {
         showPublicUrl(data.auth_token);
         if (isAndroid()) {
+            rtcCamSocket.close();
             runAndroidApp(joinRoomId, data.auth_token);
         }
     }
 }
 
 function handlerError(error) {
-    if (error.error_code == 1003 || // 방이 꽉 찼습니다.
-        error.error_code == 1005 || // 방 제목이 비어있습니다.
-        error.error_code == 1006 || // 최대 인원 수가 올바르지 않습니다.
-        error.error_code == 1007) {
+    if (error.error_code === 1003 || // 방이 꽉 찼습니다.
+        error.error_code === 1005 || // 방 제목이 비어있습니다.
+        error.error_code === 1006 || // 최대 인원 수가 올바르지 않습니다.
+        error.error_code === 1007) {
         alert(error.error_message);
-    } else if (error.error_code == 1001) { // 클라이언트를 찾을 수 없을떄
+    } else if (error.error_code === 1001) { // 클라이언트를 찾을 수 없을떄
 
     } else { 
         moveHome();
