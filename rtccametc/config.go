@@ -76,7 +76,7 @@ func (c *RTCCamConfig) GetIceServersToJson() []interface{} {
 	iceServers := make([]interface{}, 0, len(c.StunServers)+len(c.TurnServers))
 	for _, stunServer := range c.StunServers {
 		iceServers = append(iceServers, struct {
-			Urls string `yaml:"urls"`
+			Urls string `json:"urls"`
 		}{
 			Urls: stunServer.URL,
 		})
